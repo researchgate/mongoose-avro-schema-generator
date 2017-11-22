@@ -1,4 +1,4 @@
-# {{project_name}}
+# Mongoose Avro Schema Creator
 
 [![Build Status](https://travis-ci.org/researchgate/node-package-blueprint.svg?branch=master)](https://travis-ci.org/researchgate/node-package-blueprint)
 [![Codecov](https://img.shields.io/codecov/c/github/researchgate/node-package-blueprint.svg)](https://codecov.io/gh/researchgate/node-package-blueprint)
