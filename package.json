@@ -10,19 +10,14 @@
     "dist"
   ],
   "scripts": {
-    "clear": "run-s clear:*",
-    "clear:dist": "rimraf ./dist",
-    "clear:lib": "rimraf ./lib",
     "commitmsg": "commitlint -x @commitlint/config-angular --edit",
     "coverage": "yarn test -- --coverage",
     "create-github-release": "conventional-github-releaser -p angular",
     "format": "eslint --fix src/",
-    "generate": "echo generate",
     "lint": "run-s lint:*",
     "lint:json": "jsonlint-cli {**/*.json,.*rc}",
     "lint:js": "eslint src/",
     "precommit": "echo $PATH && yarn lint-staged && yarn test",
-    "prepare": "run-s clear generate",
     "prepublishOnly": "run-s test",
     "release": "standard-version",
     "test": "./node_modules/mocha/bin/mocha test"
@@ -68,6 +63,7 @@
     "commander": "^2.11.0",
     "fs-extra": "^4.0.1",
     "mocha": "^4.0.1",
+    "mongoose": "^4.13.4",
     "ncp": "^2.0.0",
     "nodegit": "^0.20.1",
     "semver": "^5.4.1",
