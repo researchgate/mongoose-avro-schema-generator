@@ -5,4 +5,9 @@
 [![Dependency Status](https://dependencyci.com/github/researchgate/node-package-blueprint/badge)](https://dependencyci.com/github/researchgate/node-package-blueprint)
 
 ### Notes
-* Function defaults are not supported
+* Schema has to exactly represent DB! Use versionKey: false if your DB does not have the __v field for example (which can happen if Mongoose
+only reads, but never writes).
+* Function defaults are not supported.
+* No support for custom types.
+* No support for schemas created from ES6 classes yet.
+* Buffer should be used with care.

@@ -10,19 +10,13 @@ const AVRO_TYPE_STRING = 'string';
 const AVRO_TYPE_LONG = 'long';
 const AVRO_TYPE_BOOLEAN = 'boolean';
 const AVRO_TYPE_DOUBLE = 'double';
+const AVRO_TYPE_BYTES = 'bytes';
 
 const TYPE_MAPPING = [
     {
         sources: [String, Schema.Types.String],
         typeDefinition: {
             type: AVRO_TYPE_STRING,
-        },
-    },
-    {
-        sources: [Date],
-        typeDefinition: {
-            type: AVRO_TYPE_LONG,
-            subtype: 'date',
         },
     },
     {
@@ -38,56 +32,68 @@ const TYPE_MAPPING = [
         },
     },
     {
+        sources: [Buffer],
+        typeDefinition: {
+            type: AVRO_TYPE_BYTES,
+        },
+    },
+    {
+        sources: [Date],
+        typeDefinition: {
+            type: AVRO_TYPE_LONG,
+            subtype: 'date',
+        },
+    },
+    {
         sources: [Schema.Types.ObjectId],
         typeDefinition: {
             type: AVRO_TYPE_STRING,
             subtype: 'objectid',
         },
     },
-    {
-        sources: [Schema.Types.Mixed],
-        typeDefinition: {
-            type: AVRO_TYPE_STRING,
-        },
-    },
 ];
 
-let parse = object => {
+const IGNORED_TYPES = [mongoose.VirtualType]; // We ignore the virtual type since it is only used internally by mongoose.
+const UNSUPPORTED_TYPES = [Schema.Types.Mixed]; // We cannot support the mixed type because avro has to know the actual type.
+
+let namespace = 'mongoose';
+
+let parse = (key, object) => {
     if (object instanceof Array) {
-        return parseArray(object);
+        return parseArray(key, object);
     }
 
     let type = typeof object;
 
     if (type === 'function' && isPrimitive(object)) {
-        return parsePrimitive(object);
+        return parsePrimitive(key, object);
     }
 
     if (type === 'object') {
+        if (isUnsupportedType(object)) {
+            throw new Error('Unsupported type ' + object);
+        }
+
         if (isPrimitiveObject(object)) {
-            return parsePrimitiveObject(object);
+            return parsePrimitiveObject(key, object);
         }
         if (isArrayObject(object)) {
-            return parseArray(object.type);
+            return parseArray(key, object.type);
         }
 
-        return parseObject(object);
+        return parseObject(key, object);
     }
 
-    throw new Error('Unable to parse object of type ' + type + ': ' + object);
+    throw new Error('Unable to parse entity' + key + ': ' + object);
 };
 
-let parseObject = object => {
+let parseObject = (key, object) => {
     let fields = [];
     for (let name in object) {
-        if (object.hasOwnProperty(name)) {
-            let type = parse(object[name]);
-            let field = {
-                name: name,
-                type: type,
-            };
+        if (object.hasOwnProperty(name) && !isIgnoredType(object[name])) {
+            let field = parse(name, object[name]);
 
-            let defaultValue = getDefault(type, object[name]);
+            let defaultValue = getDefault(field.type, object[name]);
             if (typeof defaultValue !== 'undefined') {
                 field.default = defaultValue;
             }
@@ -99,28 +105,30 @@ let parseObject = object => {
     return {
         type: AVRO_TYPE_RECORD,
         fields: fields,
+        name: key,
     };
 };
 
-let parseArray = array => {
+let parseArray = (key, array) => {
     return {
+        name: key,
         type: AVRO_TYPE_ARRAY,
-        items: parse(array[0], false),
+        items: parse(key + 'Item', array[0]),
     };
 };
 
-let parsePrimitive = primitive => {
+let parsePrimitive = (key, primitive) => {
     let target = getMappedTarget(primitive);
     target = addNull(target);
-    return target;
+    return { name: key, type: target };
 };
 
-let parsePrimitiveObject = primitiveObject => {
-    let result = getMappedTarget(primitiveObject.type);
+let parsePrimitiveObject = (key, primitiveObject) => {
+    let target = getMappedTarget(primitiveObject.type);
     if (!isRequired(primitiveObject)) {
-        return addNull(result);
+        return { name: key, type: addNull(target) };
     }
-    return result;
+    return { name: key, type: target };
 };
 
 let isPrimitive = type => {
@@ -160,6 +168,18 @@ let isArrayObject = object => {
     }
 
     return true;
+};
+
+let isIgnoredType = object => {
+    return IGNORED_TYPES.some(type => {
+        return object instanceof type;
+    });
+};
+
+let isUnsupportedType = object => {
+    return UNSUPPORTED_TYPES.some(type => {
+        return object instanceof type;
+    });
 };
 
 let getMappedTarget = type => {
@@ -207,16 +227,28 @@ let getDefault = (typeDefinition, object) => {
     return undefined;
 };
 
-let generate = () => {
+let generate = (models = [], options = {}) => {
     let results = [];
-    mongoose.modelNames().forEach(name => {
-        let schema = mongoose.model(name).schema.obj;
-        let document = parse(schema);
-        document.name = name;
+    namespace = options.namespace || namespace;
+
+    if (models.length === 0) {
+        models = mongoose.modelNames();
+    }
+
+    models.forEach(name => {
+        let model = mongoose.model(name);
+        let schema = model.schema.tree;
+
+        let document = {};
+        document = Object.assign(document, parse(name, schema));
+
+        document.dbtype = 'mongodb';
+        document.namespace = namespace;
+        document.dbcollection = model.collection.name;
         results.push(document);
     });
 
     return results;
 };
 
-module.exports = generate;
+module.exports = { generate: generate };
