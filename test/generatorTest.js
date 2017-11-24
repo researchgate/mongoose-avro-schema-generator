@@ -2,94 +2,10 @@
 
 const assert = require('assert');
 const mongoose = require('mongoose');
-const mongooseAvroSchemaGenerator = require('../src/index');
+const mongooseAvroSchemaGenerator = require('../src/generator');
 const cleanupModels = require('./cleanupModels');
 
 const Schema = mongoose.Schema;
-
-/**
- * TODO Test case for empty arrays/objects
- * TODO Test case for mixed type
- * TODO Test case for nastily nested objects
- * TODO Test case for invalid schema names
- * TODO Test case for ignored virtual type
- * TODO Test case for type {} (should equal to mixed)
- * TODO Test case for projects as parameters
- * TODO Test case for namespace
- */
-describe('appmiral test', function() {
-    afterEach(function() {
-        cleanupModels();
-    });
-
-    it('parses component model', function() {
-        let ComponentSchema = new Schema(
-            {
-                _id: String,
-                repo: String,
-                currentVersion: String,
-                dependencies: [String],
-                wikiUrls: {},
-                type: String,
-                docker: [
-                    {
-                        path: String,
-                        baseImages: [String],
-                        usedIn: {
-                            baseImage: [String],
-                            kubernetesContainer: [String],
-                        },
-                    },
-                ],
-                k8s: [
-                    {
-                        services: [String],
-                        deployments: [
-                            {
-                                name: String,
-                                containers: [
-                                    {
-                                        name: String,
-                                        image: String,
-                                    },
-                                ],
-                                extras: [String],
-                            },
-                        ],
-                        kubernetesFile: String,
-                    },
-                ],
-                metadata: {
-                    name: { type: String, required: true },
-                    type: { type: String, default: 'test' },
-                    status: { type: String },
-                    description: { type: String },
-                    test: {
-                        bla: String,
-                        blub: String,
-                    },
-                    technicalContacts: { type: [String] },
-                    productContacts: { type: [String] },
-                    group: { type: String },
-                    modules: [
-                        {
-                            name: { type: String },
-                            technicalContacts: { type: [String] },
-                            productContacts: { type: [String] },
-                        },
-                    ],
-                },
-            },
-            { collection: 'projectInfos' },
-        );
-        mongoose.model('ProjectInfo', ComponentSchema);
-
-        let expected = [];
-
-        let result = mongooseAvroSchemaGenerator.generate();
-        console.dir(result, { depth: null, colors: true });
-    });
-});
 
 describe('schema meta data', function() {
     const MODEL_NAME = 'test';
@@ -175,22 +91,12 @@ describe('primitive types', function() {
             {
                 default: null,
                 name: 'nativeString',
-                type: [
-                    'null',
-                    {
-                        type: 'string',
-                    },
-                ],
+                type: ['null', 'string'],
             },
             {
                 default: null,
                 name: 'schemaString',
-                type: [
-                    'null',
-                    {
-                        type: 'string',
-                    },
-                ],
+                type: ['null', 'string'],
             },
         ];
 
@@ -209,22 +115,12 @@ describe('primitive types', function() {
             {
                 default: null,
                 name: 'nativeBoolean',
-                type: [
-                    'null',
-                    {
-                        type: 'boolean',
-                    },
-                ],
+                type: ['null', 'boolean'],
             },
             {
                 default: null,
                 name: 'schemaBoolean',
-                type: [
-                    'null',
-                    {
-                        type: 'boolean',
-                    },
-                ],
+                type: ['null', 'boolean'],
             },
         ];
 
@@ -243,22 +139,12 @@ describe('primitive types', function() {
             {
                 default: null,
                 name: 'nativeNumber',
-                type: [
-                    'null',
-                    {
-                        type: 'double',
-                    },
-                ],
+                type: ['null', 'double'],
             },
             {
                 default: null,
                 name: 'schemaNumber',
-                type: [
-                    'null',
-                    {
-                        type: 'double',
-                    },
-                ],
+                type: ['null', 'double'],
             },
         ];
 
@@ -276,12 +162,7 @@ describe('primitive types', function() {
             {
                 default: null,
                 name: 'buffer',
-                type: [
-                    'null',
-                    {
-                        type: 'bytes',
-                    },
-                ],
+                type: ['null', 'bytes'],
             },
         ];
 
@@ -347,17 +228,52 @@ describe('primitive types', function() {
             {
                 default: null,
                 name: 'some',
-                type: [
-                    'null',
-                    {
-                        type: 'double',
-                    },
-                ],
+                type: ['null', 'double'],
             },
         ];
 
         let result = mongooseAvroSchemaGenerator.generate();
         assertHasFields(result, expected);
+    });
+
+    it('includes autogenerated fields', function() {
+        let schema = new Schema({
+            some: Number,
+        });
+        mongoose.model('test', schema);
+
+        let expected = [
+            {
+                name: 'some',
+                default: null,
+                type: ['null', 'double'],
+            },
+            {
+                name: '_id',
+                default: null,
+                type: ['null', { type: 'string', subtype: 'objectid' }],
+            },
+            {
+                name: '__v',
+                default: null,
+                type: ['null', 'double'],
+            },
+        ];
+
+        let result = mongooseAvroSchemaGenerator.generate();
+
+        assertHasFields(result, expected);
+    });
+
+    it('excludes virtual type field "id"', function() {
+        let schema = new Schema({
+            some: Number,
+        });
+        mongoose.model('test', schema);
+
+        let result = mongooseAvroSchemaGenerator.generate();
+
+        assertNotHasFields(result, ['id']);
     });
 });
 
@@ -376,7 +292,7 @@ describe('nullable', function() {
             {
                 name: 'some',
                 default: null,
-                type: ['null', { type: 'double' }],
+                type: ['null', 'double'],
             },
         ];
 
@@ -394,7 +310,7 @@ describe('nullable', function() {
         let expected = [
             {
                 name: 'some',
-                type: { type: 'double' },
+                type: 'double',
             },
         ];
 
@@ -419,7 +335,7 @@ describe('defaults', function() {
             {
                 name: 'some',
                 default: 12,
-                type: ['null', { type: 'double' }],
+                type: ['null', 'double'],
             },
         ];
 
@@ -438,7 +354,7 @@ describe('defaults', function() {
             {
                 name: 'some',
                 default: null,
-                type: ['null', { type: 'double' }],
+                type: ['null', 'double'],
             },
         ];
 
@@ -459,7 +375,8 @@ describe('defaults', function() {
                 default: [],
                 items: {
                     name: 'someItem',
-                    type: ['null', { type: 'double' }],
+                    default: null,
+                    type: ['null', 'double'],
                 },
                 type: 'array',
             },
@@ -482,7 +399,8 @@ describe('defaults', function() {
                 default: ['bla'],
                 items: {
                     name: 'someItem',
-                    type: ['null', { type: 'double' }],
+                    default: null,
+                    type: ['null', 'double'],
                 },
                 type: 'array',
             },
@@ -491,6 +409,45 @@ describe('defaults', function() {
         let result = mongooseAvroSchemaGenerator.generate();
 
         assertHasFields(result, expected);
+    });
+});
+
+describe('unallowed types', function() {
+    afterEach(function() {
+        cleanupModels();
+    });
+
+    it('throws exception if schema definition contains mixed type explicitly', function() {
+        let schema = new Schema({
+            some: Schema.Types.Mixed,
+        });
+        mongoose.model('test', schema);
+
+        assert.throws(() => {
+            mongooseAvroSchemaGenerator.generate();
+        }, /Unable to parse entity/);
+    });
+
+    it('throws exception if schema definition contains mixed type as empty object', function() {
+        let schema = new Schema({
+            some: {},
+        });
+        mongoose.model('test', schema);
+
+        assert.throws(() => {
+            mongooseAvroSchemaGenerator.generate();
+        }, /Unsupported type/);
+    });
+
+    it('throws exception if schema definition contains mixed type as empty array', function() {
+        let schema = new Schema({
+            some: [],
+        });
+        mongoose.model('test', schema);
+
+        assert.throws(() => {
+            mongooseAvroSchemaGenerator.generate();
+        }, /Unable to parse entity/);
     });
 });
 
@@ -515,7 +472,7 @@ describe('recursive types', function() {
                     {
                         name: 'thing',
                         default: null,
-                        type: ['null', { type: 'double' }],
+                        type: ['null', 'double'],
                     },
                 ],
             },
@@ -526,9 +483,190 @@ describe('recursive types', function() {
         assertHasFields(result, expected);
     });
 
-    it('parses embedded documents with key "type"', function() {});
+    it('parses embedded documents with key "type"', function() {
+        let schema = new Schema({
+            some: {
+                type: { type: Number },
+            },
+        });
+        mongoose.model('test', schema);
 
-    it('parses arrays', function() {});
+        let expected = [
+            {
+                name: 'some',
+                type: 'record',
+                fields: [
+                    {
+                        name: 'type',
+                        default: null,
+                        type: ['null', 'double'],
+                    },
+                ],
+            },
+        ];
+
+        let result = mongooseAvroSchemaGenerator.generate();
+
+        assertHasFields(result, expected);
+    });
+
+    it('parses arrays', function() {
+        let schema = new Schema({
+            some: [Number],
+        });
+        mongoose.model('test', schema);
+
+        let expected = [
+            {
+                name: 'some',
+                type: 'array',
+                items: {
+                    name: 'someItem',
+                    default: null,
+                    type: ['null', 'double'],
+                },
+                default: [],
+            },
+        ];
+
+        let result = mongooseAvroSchemaGenerator.generate();
+
+        assertHasFields(result, expected);
+    });
+
+    it('parses arrays of records', function() {
+        let schema = new Schema({
+            some: [
+                {
+                    thingA: String,
+                    thingB: { type: Number, required: true },
+                },
+            ],
+        });
+        mongoose.model('test', schema);
+
+        let expected = [
+            {
+                name: 'some',
+                type: 'array',
+                items: {
+                    name: 'someItem',
+                    type: 'record',
+                    fields: [
+                        {
+                            name: 'thingB',
+                            type: 'double',
+                        },
+                        {
+                            name: 'thingA',
+                            type: ['null', 'string'],
+                            default: null,
+                        },
+                    ],
+                },
+                default: [],
+            },
+        ];
+
+        let result = mongooseAvroSchemaGenerator.generate();
+
+        assertHasFields(result, expected);
+    });
+
+    it('parses record with arrays', function() {
+        let schema = new Schema({
+            some: {
+                thing: [String],
+            },
+        });
+        mongoose.model('test', schema);
+
+        let expected = [
+            {
+                name: 'some',
+                type: 'record',
+                fields: [
+                    {
+                        name: 'thing',
+                        type: 'array',
+                        items: {
+                            name: 'thingItem',
+                            type: ['null', 'string'],
+                            default: null,
+                        },
+                        default: [],
+                    },
+                ],
+            },
+        ];
+
+        let result = mongooseAvroSchemaGenerator.generate();
+
+        assertHasFields(result, expected);
+    });
+
+    it('does not parse empty arrays', function() {
+        let schema = new Schema({
+            some: [],
+        });
+        mongoose.model('test', schema);
+
+        assert.throws(() => {
+            mongooseAvroSchemaGenerator.generate();
+        }, /Unable to parse entity/);
+    });
+
+    it('does not parse empty object literals', function() {
+        let schema = new Schema({
+            some: {},
+        });
+        mongoose.model('test', schema);
+
+        assert.throws(() => {
+            mongooseAvroSchemaGenerator.generate();
+        }, /Unsupported type/);
+    });
+});
+
+describe('multiple models', function() {
+    beforeEach(function() {
+        let schema1 = new Schema({
+            some: Number,
+        });
+        mongoose.model('test1', schema1);
+        let schema2 = new Schema({
+            thing: String,
+        });
+        mongoose.model('test2', schema2);
+        let schema3 = new Schema({
+            thing: Boolean,
+        });
+        mongoose.model('test3', schema3);
+    });
+
+    afterEach(function() {
+        cleanupModels();
+    });
+
+    it('parses all defined models', function() {
+        let expected = ['test1', 'test2', 'test3'];
+
+        let result = mongooseAvroSchemaGenerator.generate();
+        assertSchemaNames(result, expected);
+    });
+
+    it('parses selected models', function() {
+        let expected = ['test1', 'test2'];
+
+        let result = mongooseAvroSchemaGenerator.generate(['test1', 'test2']);
+        assertSchemaNames(result, expected);
+    });
+
+    it('throws exception if model name is undefined', function() {
+        assert.throws(() => {
+            mongooseAvroSchemaGenerator.generate(['test1', 'test2', 'testX']);
+        }, /Could not find mongoose schema/);
+    });
 });
 
 let assertHasAttributes = (result, attributes) => {
@@ -556,4 +694,26 @@ let assertHasFields = (result, fields) => {
 
         assert.deepEqual(actual, field, 'Found field, but field does not match expectation');
     });
+};
+
+let assertNotHasFields = (result, fieldNames) => {
+    assert(result.length === 1, 'Result did not contain exactly one schema');
+
+    let unexpectedFields = result[0].fields
+        .filter(field => {
+            return fieldNames.includes(field.name);
+        })
+        .map(field => {
+            return field.name;
+        });
+
+    assert(unexpectedFields.length === 0, `Unexpected fields: ${unexpectedFields.join()}`);
+};
+
+let assertSchemaNames = (result, schemaNames) => {
+    let namesInResult = result.map(schema => {
+        return schema.name;
+    });
+
+    assert.deepEqual(namesInResult, schemaNames, 'Result did not contain expected schema names');
 };
