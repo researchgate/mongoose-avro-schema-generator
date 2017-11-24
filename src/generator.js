@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const KEY_TYPE = 'type';
+const KEY_DEFAULT = 'default';
 const AVRO_TYPE_RECORD = 'record';
 const AVRO_TYPE_ARRAY = 'array';
 const AVRO_TYPE_STRING = 'string';
@@ -52,12 +53,10 @@ let namespace = 'mongoose';
 
 let parse = (key, object) => {
     let result = parseDelegated(key, object);
+    let defaultValue = getDefault(result.type, object);
 
-    if (result.hasOwnProperty('type')) {
-        let defaultValue = getDefault(result.type, object);
-        if (typeof defaultValue !== 'undefined') {
-            result.default = defaultValue;
-        }
+    if (typeof defaultValue !== 'undefined') {
+        result.default = defaultValue;
     }
 
     return result;
@@ -70,20 +69,21 @@ let parseDelegated = (key, object) => {
 
     let type = typeof object;
 
+    if (isUnsupportedType(object)) {
+        throw new Error('Unsupported type ' + object);
+    }
+
     if (type === 'function' && isPrimitive(object)) {
         return parsePrimitive(key, object);
     }
 
-    if (type === 'object') {
-        if (isUnsupportedType(object)) {
-            throw new Error('Unsupported type ' + object);
+    if (type === 'object' && !isEmptyObject(object)) {
+        if (isArrayObject(object)) {
+            return parseArray(key, object.type);
         }
 
         if (isPrimitiveObject(object)) {
             return parsePrimitiveObject(key, object);
-        }
-        if (isArrayObject(object)) {
-            return parseArray(key, object.type);
         }
 
         return parseObject(key, object);
@@ -102,7 +102,7 @@ let parseObject = (key, object) => {
     }
 
     return {
-        type: AVRO_TYPE_RECORD, //TODO should we add null and default null here?
+        type: AVRO_TYPE_RECORD,
         fields: fields,
         name: key,
     };
@@ -130,16 +130,22 @@ let parsePrimitiveObject = (key, primitiveObject) => {
         return Object.assign({ name: key }, mappedType);
     }
 
-    if (typeof mappedType === 'string') {
-        mappedType = { type: mappedType };
-    }
+    mappedType = { type: mappedType };
 
     return Object.assign({ name: key }, mappedType);
 };
 
-let isPrimitive = type => {
+let isPrimitive = object => {
+    if (isEmptyObject(object) || isEmptyArray(object)) {
+        return true;
+    }
+
+    if (object instanceof Array) {
+        return isPrimitive(object[0]);
+    }
+
     return TYPE_MAPPING.some(mapping => {
-        return mapping.sources.includes(type);
+        return mapping.sources.includes(object);
     });
 };
 
@@ -149,7 +155,11 @@ let isPrimitiveObject = object => {
     }
 
     for (let key in object) {
-        if (object.hasOwnProperty(key) && key !== KEY_TYPE && isPrimitive(object[key])) {
+        if (
+            object.hasOwnProperty(key) &&
+            key !== KEY_TYPE &&
+            (isPrimitive(object[key]) || typeof object[key] === 'object')
+        ) {
             return false;
         }
     }
@@ -163,11 +173,8 @@ let isArrayObject = object => {
     }
 
     for (let key in object) {
-        if (object.hasOwnProperty(key)) {
-            if (
-                (key !== KEY_TYPE && isPrimitive(object[key])) ||
-                (object.key instanceof Array && isPrimitive(object.key[0]))
-            ) {
+        if (object.hasOwnProperty(key) && key !== KEY_TYPE && key !== KEY_DEFAULT) {
+            if (isPrimitive(object[key]) || typeof object[key] === 'object') {
                 return false;
             }
         }
@@ -183,17 +190,17 @@ let isIgnoredType = object => {
 };
 
 let isUnsupportedType = object => {
-    if (isEmptyObject(object)) {
-        return true;
-    }
-
     return UNSUPPORTED_TYPES.some(type => {
-        return object instanceof type;
+        return object === type;
     });
 };
 
 let isEmptyObject = object => {
-    return Object.getOwnPropertyNames(object).length === 0;
+    return typeof object === 'object' && Object.getOwnPropertyNames(object).length === 0;
+};
+
+let isEmptyArray = object => {
+    return object instanceof Array && object.length === 0;
 };
 
 let getMappedType = type => {
@@ -207,15 +214,11 @@ let isRequired = primitiveObject => {
         return false;
     }
 
-    if (primitiveObject.required !== true) {
-        return false;
-    }
-
     if (typeof primitiveObject.required === 'function') {
         return primitiveObject.required();
     }
 
-    return true;
+    return primitiveObject.required === true;
 };
 
 let addNull = typeDefinition => {
@@ -258,7 +261,6 @@ let generate = (models = [], options = {}) => {
         }
 
         let schema = model.schema.tree;
-
         let document;
 
         try {
@@ -276,4 +278,6 @@ let generate = (models = [], options = {}) => {
     return results;
 };
 
-module.exports = { generate: generate };
+module.exports = {
+    generate: generate,
+};

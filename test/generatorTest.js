@@ -19,7 +19,7 @@ describe('schema meta data', function() {
         cleanupModels();
     });
 
-    it('has the name of the model', function() {
+    it('has name of the model', function() {
         let expected = {
             name: MODEL_NAME,
         };
@@ -37,7 +37,7 @@ describe('schema meta data', function() {
         assertHasAttributes(result, expected);
     });
 
-    it('has mongodb dbtype', function() {
+    it('has dbtype mongodb', function() {
         let expected = {
             dbtype: 'mongodb',
         };
@@ -46,7 +46,7 @@ describe('schema meta data', function() {
         assertHasAttributes(result, expected);
     });
 
-    it('uses default namespace if namespace was not provided in options', function() {
+    it('has default namespace if namespace was not provided in options', function() {
         let expected = {
             namespace: 'mongoose',
         };
@@ -55,7 +55,7 @@ describe('schema meta data', function() {
         assertHasAttributes(result, expected);
     });
 
-    it('uses namespace provided in options', function() {
+    it('has namespace provided in options', function() {
         let namespace = 'some.namespace';
         let expected = {
             namespace: namespace,
@@ -65,7 +65,7 @@ describe('schema meta data', function() {
         assertHasAttributes(result, expected);
     });
 
-    it('uses the collection name provided by mongoose', function() {
+    it('has collection name provided by mongoose', function() {
         let expected = {
             dbcollection: mongoose.model('test').collection.name,
         };
@@ -101,6 +101,7 @@ describe('primitive types', function() {
         ];
 
         let result = mongooseAvroSchemaGenerator.generate();
+
         assertHasFields(result, expected);
     });
 
@@ -318,6 +319,66 @@ describe('nullable', function() {
 
         assertHasFields(result, expected);
     });
+
+    it('includes null as type if not required when required property is set to false', function() {
+        let schema = new Schema({
+            some: { type: Number, required: false },
+        });
+        mongoose.model('test', schema);
+
+        let expected = [
+            {
+                name: 'some',
+                default: null,
+                type: ['null', 'double'],
+            },
+        ];
+
+        let result = mongooseAvroSchemaGenerator.generate();
+
+        assertHasFields(result, expected);
+    });
+
+    it('does not include null as type if required defined as function', function() {
+        let schema = new Schema({
+            some: {
+                type: Number,
+                required: () => {
+                    return true;
+                },
+            },
+        });
+        mongoose.model('test', schema);
+
+        let expected = [
+            {
+                name: 'some',
+                type: 'double',
+            },
+        ];
+
+        let result = mongooseAvroSchemaGenerator.generate();
+
+        assertHasFields(result, expected);
+    });
+
+    it('does not include null as type if required for complex type', function() {
+        let schema = new Schema({
+            some: { type: Date, required: true },
+        });
+        mongoose.model('test', schema);
+
+        let expected = [
+            {
+                name: 'some',
+                type: { type: 'long', subtype: 'date' },
+            },
+        ];
+
+        let result = mongooseAvroSchemaGenerator.generate();
+
+        assertHasFields(result, expected);
+    });
 });
 
 describe('defaults', function() {
@@ -410,6 +471,35 @@ describe('defaults', function() {
 
         assertHasFields(result, expected);
     });
+
+    it('uses defined default for array of arrays', function() {
+        let schema = new Schema({
+            some: { type: [[Number]], default: ['bla'] },
+        });
+        mongoose.model('test', schema);
+
+        let expected = [
+            {
+                name: 'some',
+                default: ['bla'],
+                items: {
+                    name: 'someItem',
+                    default: [],
+                    type: 'array',
+                    items: {
+                        name: 'someItemItem',
+                        type: ['null', 'double'],
+                        default: null,
+                    },
+                },
+                type: 'array',
+            },
+        ];
+
+        let result = mongooseAvroSchemaGenerator.generate();
+
+        assertHasFields(result, expected);
+    });
 });
 
 describe('unallowed types', function() {
@@ -425,7 +515,7 @@ describe('unallowed types', function() {
 
         assert.throws(() => {
             mongooseAvroSchemaGenerator.generate();
-        }, /Unable to parse entity/);
+        }, /Unsupported type/);
     });
 
     it('throws exception if schema definition contains mixed type as empty object', function() {
@@ -436,12 +526,23 @@ describe('unallowed types', function() {
 
         assert.throws(() => {
             mongooseAvroSchemaGenerator.generate();
-        }, /Unsupported type/);
+        }, /Unable to parse entity/);
     });
 
     it('throws exception if schema definition contains mixed type as empty array', function() {
         let schema = new Schema({
             some: [],
+        });
+        mongoose.model('test', schema);
+
+        assert.throws(() => {
+            mongooseAvroSchemaGenerator.generate();
+        }, /Unable to parse entity/);
+    });
+
+    it('throws exception if schema definition contains mixed type named "type" as empty array', function() {
+        let schema = new Schema({
+            type: [],
         });
         mongoose.model('test', schema);
 
@@ -502,6 +603,149 @@ describe('recursive types', function() {
                         type: ['null', 'double'],
                     },
                 ],
+            },
+        ];
+
+        let result = mongooseAvroSchemaGenerator.generate();
+
+        assertHasFields(result, expected);
+    });
+
+    it('parses embedded documents with key "type" that also contain other fields', function() {
+        let schema = new Schema({
+            some: {
+                type: Number,
+                thing: String,
+            },
+        });
+        mongoose.model('test', schema);
+
+        let expected = [
+            {
+                name: 'some',
+                type: 'record',
+                fields: [
+                    {
+                        name: 'thing',
+                        default: null,
+                        type: ['null', 'string'],
+                    },
+                    {
+                        name: 'type',
+                        default: null,
+                        type: ['null', 'double'],
+                    },
+                ],
+            },
+        ];
+
+        let result = mongooseAvroSchemaGenerator.generate();
+
+        assertHasFields(result, expected);
+    });
+
+    it('parses embedded documents with key "type" that also contains an array field', function() {
+        let schema = new Schema({
+            some: {
+                type: [Number],
+                thing: String,
+            },
+        });
+        mongoose.model('test', schema);
+
+        let expected = [
+            {
+                name: 'some',
+                type: 'record',
+                fields: [
+                    {
+                        name: 'thing',
+                        default: null,
+                        type: ['null', 'string'],
+                    },
+                    {
+                        name: 'type',
+                        default: [],
+                        type: 'array',
+                        items: {
+                            default: null,
+                            name: 'typeItem',
+                            type: ['null', 'double'],
+                        },
+                    },
+                ],
+            },
+        ];
+
+        let result = mongooseAvroSchemaGenerator.generate();
+
+        assertHasFields(result, expected);
+    });
+
+    it('parses embedded documents with key "type" that also contains an embedded document', function() {
+        let schema = new Schema({
+            some: {
+                type: [Number],
+                thing: {
+                    other: String,
+                },
+            },
+        });
+        mongoose.model('test', schema);
+
+        let expected = [
+            {
+                name: 'some',
+                type: 'record',
+                fields: [
+                    {
+                        name: 'thing',
+                        type: 'record',
+                        fields: [
+                            {
+                                name: 'other',
+                                type: ['null', 'string'],
+                                default: null,
+                            },
+                        ],
+                    },
+                    {
+                        name: 'type',
+                        default: [],
+                        type: 'array',
+                        items: {
+                            default: null,
+                            name: 'typeItem',
+                            type: ['null', 'double'],
+                        },
+                    },
+                ],
+            },
+        ];
+
+        let result = mongooseAvroSchemaGenerator.generate();
+
+        assertHasFields(result, expected);
+    });
+
+    it('parses embedded documents with key "type" that contain additional properties', function() {
+        let schema = new Schema({
+            some: {
+                type: [Number],
+                thing: true,
+            },
+        });
+        mongoose.model('test', schema);
+
+        let expected = [
+            {
+                name: 'some',
+                type: 'array',
+                items: {
+                    name: 'someItem',
+                    default: null,
+                    type: ['null', 'double'],
+                },
             },
         ];
 
@@ -573,6 +817,35 @@ describe('recursive types', function() {
         assertHasFields(result, expected);
     });
 
+    it('parses array of arrays', function() {
+        let schema = new Schema({
+            some: [[String]],
+        });
+        mongoose.model('test', schema);
+
+        let expected = [
+            {
+                name: 'some',
+                type: 'array',
+                items: {
+                    name: 'someItem',
+                    type: 'array',
+                    items: {
+                        name: 'someItemItem',
+                        type: ['null', 'string'],
+                        default: null,
+                    },
+                    default: [],
+                },
+                default: [],
+            },
+        ];
+
+        let result = mongooseAvroSchemaGenerator.generate();
+
+        assertHasFields(result, expected);
+    });
+
     it('parses record with arrays', function() {
         let schema = new Schema({
             some: {
@@ -616,15 +889,15 @@ describe('recursive types', function() {
         }, /Unable to parse entity/);
     });
 
-    it('does not parse empty object literals', function() {
+    it('does not parse empty array of array', function() {
         let schema = new Schema({
-            some: {},
+            some: [[]],
         });
         mongoose.model('test', schema);
 
         assert.throws(() => {
             mongooseAvroSchemaGenerator.generate();
-        }, /Unsupported type/);
+        }, /Unable to parse entity/);
     });
 });
 

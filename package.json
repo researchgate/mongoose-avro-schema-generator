@@ -10,8 +10,6 @@
     "dist"
   ],
   "scripts": {
-    "commitmsg": "commitlint -x @commitlint/config-angular --edit",
-    "coverage": "yarn test -- --coverage",
     "create-github-release": "conventional-github-releaser -p angular",
     "format": "eslint --fix src/",
     "lint": "run-s lint:*",
@@ -20,7 +18,8 @@
     "precommit": "echo $PATH && yarn lint-staged && yarn test",
     "prepublishOnly": "run-s test",
     "release": "standard-version",
-    "test": "./node_modules/mocha/bin/mocha test"
+    "test": "./node_modules/nyc/bin/nyc.js --reporter=text ./node_modules/mocha/bin/_mocha test",
+    "coverage": "./node_modules/nyc/bin/nyc.js --reporter=text ./node_modules/mocha/bin/_mocha test"
   },
   "lint-staged": {
     "*.js": [
@@ -40,10 +39,9 @@
   "author": "Tobias Hornberger",
   "license": "MIT",
   "devDependencies": {
-    "@commitlint/cli": "^4.2.2",
-    "@commitlint/config-angular": "^4.2.1",
     "babel-eslint": "^8.0.0",
     "conventional-github-releaser": "^2.0.0",
+    "coveralls": "^3.0.0",
     "cross-env": "^5.0.5",
     "eslint": "^4.5.0",
     "eslint-plugin-prettier": "^2.2.0",
@@ -66,11 +64,12 @@
     "mongoose": "^4.13.4",
     "ncp": "^2.0.0",
     "nodegit": "^0.20.1",
+    "nyc": "^11.3.0",
     "semver": "^5.4.1",
     "validate-npm-package-name": "^3.0.0"
   },
   "engines": {
-    "node": ">=6.0.0",
+    "node": ">=9.2.0",
     "yarn": ">= 1.0.0"
   }
 }

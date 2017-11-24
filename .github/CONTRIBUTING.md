@@ -31,9 +31,9 @@ By participating you are expected to uphold this code. Please report any behavio
 
 Before you start your work, make sure that you:
 
-* have `node` installed at v6.10.0
+* have `node` installed at v9.2.0
 * have `npm` installed at 5.3.0
-* have `yarn` installed at v0.21.3
+* have `yarn` installed at v1.0.0
 * are familiar with `git`
 * are familiar with [conventional commits](http://conventionalcommits.org)
 * have read and agree to abide by the [ResearchGate Code of Conduct](CODE_OF_CONDUCT.md)
@@ -41,20 +41,6 @@ Before you start your work, make sure that you:
 ## Project setup
 
 ### How to run the project
-
-Install Node Package Blueprint as a global npm package:
-
-```
-npm install -g @researchgate/node-package-blueprint
-```
-
-Now create a new project with the CLI tool:
-
-```
-node-package-blueprint my-project
-cd my-project/
-```
-
 Install the dependencies with:
 
 ```
@@ -64,13 +50,10 @@ yarn install
 When all dependencies get installed successfully there is a variety of commands at your disposal:
 
 * `yarn build` - runs a full build of all source files, binaries and complied bundles
-* `yarn watch` - runs a watcher that makes sure all changes and builds are noticed
-
-For the full list, please refer to [Integrated Tooling](./docs/docs/integrated-tooling.md)
 
 ### How to run tests
 
-This project uses [jest](http://facebook.github.io/jest/) for JavaScript testing.
+This project uses [mocha](https://mochajs.org/) for JavaScript testing.
 
 To run tests, execute:
 
