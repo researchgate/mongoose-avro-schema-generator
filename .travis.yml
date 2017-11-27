@@ -5,8 +5,6 @@ cache: yarn
 before_install: yarn global add greenkeeper-lockfile@1
 before_script:
 - greenkeeper-lockfile-update
-- if [[ -n "$TRAVIS_TAG" ]] && [[ "$TRAVIS_JOB_NUMBER" == *.1 ]]; then yarn run create-github-release;
-  fi
 script:
 - yarn lint
 - yarn coverage
