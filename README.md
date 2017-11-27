@@ -36,9 +36,10 @@ The Mongoose Avro Schema Generator uses "mongoose" as a default namespace for ea
 let avroSchemas = mongooseAvroSchemaGenerator.generate([], { namespace: 'some.custom.namespace' });
 ```
 
-## Caveats
+
+## Notes
 Be aware of the following.
 * The `Schema.Types.Mixed` type is not supported, as well as the equivalent empty object literal `{}` or the empty array `[]`. Trying to generate a schema from a model with such a type will result in an error.
 * The avro type `null` will be included automatically if there is no `required : true` set for a field in mongoose.
-
+* A avro default value will be set if a default is defined inside the mongoose field, or it will fall back to `null` if null is a valid type. Defaults defined as function will not be evaluated.
 
