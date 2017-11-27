@@ -1,12 +1,21 @@
 language: node_js
 node_js:
-  - "9"
+- '9'
 cache: yarn
 before_install: yarn global add greenkeeper-lockfile@1
 before_script:
-  - greenkeeper-lockfile-update
-  - 'if [[ -n "$TRAVIS_TAG" ]] && [[ "$TRAVIS_JOB_NUMBER" == *.1 ]]; then yarn run create-github-release; fi'
+- greenkeeper-lockfile-update
+- if [[ -n "$TRAVIS_TAG" ]] && [[ "$TRAVIS_JOB_NUMBER" == *.1 ]]; then yarn run create-github-release;
+  fi
 script:
-  - yarn lint
-  - yarn coverage
+- yarn lint
+- yarn coverage
 after_script: greenkeeper-lockfile-upload
+deploy:
+  provider: npm
+  email: tobias.hornberger@falsemirror.de
+  api_key:
+    secure: daUjvjhV1swGFsHNuAJN3CHqf1fF6yoymN061herMSk5K5L1Ce2q2UjcCMniSXi+/lWC/1DHizIMTNTxtVL1pZ1rwbtFfA53DSfGX+yGzSIDKBVKU7+kl72ZpdeUoBA9AipU9SXaKcTqwrG4zigYIVdwjiFtbhncFjv1rAeOqbF3ZVOe3M1Ujq2JnjtO0xGG06sWVUlVm/sw4G4eZLbQHReyiqeRltoIIQBEXDe+nndfKWuQdpsWVE5Vc7VW4A2c/YjZb/IVJEaTaPuu9X3GNnEahrDus9SfmZY0O3znFj8FzZPkCC8VwURHfNXotoM26s5ZHr5BWBQ6qeiaAKnSVY6CaclujndA6j809EF8jp0PN9EfkpeY8VI3ieMOqNbO48IaOkcEB8ERoKSa59QxzuiYTTziY++s769iackn5swgRo7DtO0r79eKG0AEf0OxQ2j56w5Ekh2WT20Ofp4d4ZDpPMqycCxZUrYBXTRtZgLZjz/paPwz1TKMNJus8yV9+dZxVBHXfywREqBw/ctr28NQ7fR+4l9bwREZtOwRM6cobkMq52u64J60CdByECn9qEd8C5Gx9Vl+l+/5M9bqLGr0fJLb1d7bomRWZOJAJGj8dcu+2hSsXlC/EBelpHypUaqMmzbjWG58Luqetz84QtfOsamE3jZGK54Ev5ZwMOg=
+  on:
+    tags: true
+    repo: researchgate/mongoose-avro-schema-generator
