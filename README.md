@@ -12,8 +12,6 @@
 A small node module that generates Apache avro schemas from mongoose schemas.
 
 ## Installation
-
-[![Greenkeeper badge](https://badges.greenkeeper.io/researchgate/mongoose-avro-schema-generator.svg)](https://greenkeeper.io/)
 ```
 yarn add mongoose-avro-schema-generator
 ```
