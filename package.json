@@ -2,7 +2,10 @@
   "name": "@researchgate/mongoose-avro-schema-generator",
   "version": "1.0.0",
   "description": "Generates Apache Avro schemas from mongoose schemas.",
-  "homepage": "https://github.com/researchgate/mongoose-avro-schema-generator",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/researchgate/mongoose-avro-schema-generator"
+  },
   "main": "lib/js/index.js",
   "module": "lib/es/index.js",
   "bin": "lib/js/bin/index.js",

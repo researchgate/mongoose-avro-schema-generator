@@ -942,6 +942,77 @@ describe('multiple models', function() {
     });
 });
 
+describe('example from readme', function() {
+    afterEach(function() {
+        cleanupModels();
+    });
+
+    it('matches the example from the README.md', function() {
+        let schema = new Schema({
+            something: { type: [[Number]], default: ['foo'] },
+            else: [String],
+        });
+        mongoose.model('mySchema', schema);
+
+        let expected = [
+            {
+                dbcollection: 'myschemas',
+                dbtype: 'mongodb',
+                fields: [
+                    {
+                        default: ['foo'],
+                        items: {
+                            default: [],
+                            items: {
+                                default: null,
+                                name: 'somethingItemItem',
+                                type: ['null', 'double'],
+                            },
+                            name: 'somethingItem',
+                            type: 'array',
+                        },
+                        name: 'something',
+                        type: 'array',
+                    },
+                    {
+                        default: [],
+                        items: {
+                            default: null,
+                            name: 'elseItem',
+                            type: ['null', 'string'],
+                        },
+                        name: 'else',
+                        type: 'array',
+                    },
+                    {
+                        default: null,
+                        name: '_id',
+                        type: [
+                            'null',
+                            {
+                                subtype: 'objectid',
+                                type: 'string',
+                            },
+                        ],
+                    },
+                    {
+                        default: null,
+                        name: '__v',
+                        type: ['null', 'double'],
+                    },
+                ],
+                name: 'mySchema',
+                namespace: 'some.namespace',
+                type: 'record',
+            },
+        ];
+
+        let avro = mongooseAvroSchemaGenerator.generate(['mySchema'], { namespace: 'some.namespace' });
+
+        assert.deepEqual(avro, expected);
+    });
+});
+
 let assertHasAttributes = (result, attributes) => {
     assert(result.length === 1, 'Result did not contain exactly one schema');
 

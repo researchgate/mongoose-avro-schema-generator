@@ -36,6 +36,73 @@ The Mongoose Avro Schema Generator uses "mongoose" as a default namespace for ea
 let avroSchemas = mongooseAvroSchemaGenerator.generate([], { namespace: 'some.custom.namespace' });
 ```
 
+## Example
+Let's register a schema with mongoose.
+```
+const mongoose = require('mongoose');
+const mongooseAvroSchemaGenerator = require('mongoose-avro-schema-generator');
+
+let schema = new Schema({
+    something: { type: [[Number]], default: ['foo'] },
+    else: [String]
+});
+mongoose.model('mySchema', schema);
+```
+Then `mongoosevroSchemaGenerator.generate(['mySchema'], { namespace: 'some.namespace' })` will return the following avro schema:
+```
+[
+    {
+        dbcollection: 'myschemas',
+        dbtype: 'mongodb',
+        fields: [
+            {
+                default: ['foo'],
+                items: {
+                    default: [],
+                    items: {
+                        default: null,
+                        name: 'somethingItemItem',
+                        type: ['null', 'double'],
+                    },
+                    name: 'somethingItem',
+                    type: 'array',
+                },
+                name: 'something',
+                type: 'array',
+            },
+            {
+                default: [],
+                items: {
+                    default: null,
+                    name: 'elseItem',
+                    type: ['null', 'string'],
+                },
+                name: 'else',
+                type: 'array',
+            },
+            {
+                default: null,
+                name: '_id',
+                type: [
+                    'null',
+                    {
+                        subtype: 'objectid',
+                        type: 'string',
+                    },
+                ],
+            },
+            {
+                default: null,
+                name: '__v',
+                type: ['null', 'double'],
+            },
+        ],
+        name: 'mySchema',
+        namespace: 'some.namespace',
+        type: 'record',
+    },
+];
+```
 
 ## Notes
 Be aware of the following.
