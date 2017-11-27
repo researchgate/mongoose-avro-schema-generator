@@ -1,5 +1,5 @@
 {
-  "name": "mongoose-avro-schema-creator",
+  "name": "@researchgate/mongoose-avro-schema-creator",
   "version": "1.0.0",
   "description": "Generates Apache Avro schemas from mongoose schemas.",
   "main": "lib/js/index.js",
