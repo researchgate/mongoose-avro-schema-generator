@@ -19,7 +19,7 @@
     "prepublishOnly": "run-s test",
     "release": "standard-version",
     "test": "./node_modules/nyc/bin/nyc.js --reporter=html --reporter=text ./node_modules/mocha/bin/_mocha test",
-    "coverage": "./node_modules/nyc/bin/nyc.js --reporter=html --reporter=lcovonly ./node_modules/mocha/bin/_mocha test && cat ./coverage/lcov.info | coveralls"
+    "coverage": "./node_modules/nyc/bin/nyc.js --reporter=html --reporter=lcovonly ./node_modules/mocha/bin/_mocha test && cat ./coverage/lcov.info && codecov -t 20335bac-311e-4e89-84de-d3042c017862"
   },
   "lint-staged": {
     "*.js": [
@@ -40,8 +40,8 @@
   "license": "MIT",
   "devDependencies": {
     "babel-eslint": "^8.0.0",
+    "codecov": "^3.0.0",
     "conventional-github-releaser": "^2.0.0",
-    "coveralls": "^3.0.0",
     "cross-env": "^5.0.5",
     "eslint": "^4.5.0",
     "eslint-plugin-prettier": "^2.2.0",

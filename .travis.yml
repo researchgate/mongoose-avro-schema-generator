@@ -8,7 +8,5 @@ before_script:
   - 'if [[ -n "$TRAVIS_TAG" ]] && [[ "$TRAVIS_JOB_NUMBER" == *.1 ]]; then yarn run create-github-release; fi'
 script:
   - yarn lint
-  - yarn test -- --ci --coverage
+  - yarn coverage
 after_script: greenkeeper-lockfile-upload
-after_success:
-  - bash <(curl -s https://codecov.io/bash)
