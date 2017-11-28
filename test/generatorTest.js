@@ -424,7 +424,7 @@ describe('defaults', function() {
         assertHasFields(result, expected);
     });
 
-    it('uses empty array for arrays', function() {
+    it('uses null as default for arrays', function() {
         let schema = new Schema({
             some: [Number],
         });
@@ -433,13 +433,14 @@ describe('defaults', function() {
         let expected = [
             {
                 name: 'some',
-                default: [],
-                items: {
-                    name: 'someItem',
-                    default: null,
-                    type: ['null', 'double'],
-                },
-                type: 'array',
+                default: null,
+                type: [
+                    'null',
+                    {
+                        type: 'array',
+                        items: ['null', 'double'],
+                    },
+                ],
             },
         ];
 
@@ -448,22 +449,23 @@ describe('defaults', function() {
         assertHasFields(result, expected);
     });
 
-    it('uses defined default for arrays', function() {
+    it('ignores defined defaults for arrays', function() {
         let schema = new Schema({
-            some: { type: [Number], default: ['bla'] },
+            some: { type: [Number], default: 'bla' },
         });
         mongoose.model('test', schema);
 
         let expected = [
             {
                 name: 'some',
-                default: ['bla'],
-                items: {
-                    name: 'someItem',
-                    default: null,
-                    type: ['null', 'double'],
-                },
-                type: 'array',
+                default: null,
+                type: [
+                    'null',
+                    {
+                        type: 'array',
+                        items: ['null', 'double'],
+                    },
+                ],
             },
         ];
 
@@ -472,7 +474,7 @@ describe('defaults', function() {
         assertHasFields(result, expected);
     });
 
-    it('uses defined default for array of arrays', function() {
+    it('ignores defined defaults for arrays of arrays', function() {
         let schema = new Schema({
             some: { type: [[Number]], default: ['bla'] },
         });
@@ -481,18 +483,20 @@ describe('defaults', function() {
         let expected = [
             {
                 name: 'some',
-                default: ['bla'],
-                items: {
-                    name: 'someItem',
-                    default: [],
-                    type: 'array',
-                    items: {
-                        name: 'someItemItem',
-                        type: ['null', 'double'],
-                        default: null,
+                default: null,
+                type: [
+                    'null',
+                    {
+                        type: 'array',
+                        items: [
+                            'null',
+                            {
+                                type: 'array',
+                                items: ['null', 'double'],
+                            },
+                        ],
                     },
-                },
-                type: 'array',
+                ],
             },
         ];
 
@@ -664,14 +668,15 @@ describe('recursive types', function() {
                         type: ['null', 'string'],
                     },
                     {
+                        default: null,
                         name: 'type',
-                        default: [],
-                        type: 'array',
-                        items: {
-                            default: null,
-                            name: 'typeItem',
-                            type: ['null', 'double'],
-                        },
+                        type: [
+                            'null',
+                            {
+                                type: 'array',
+                                items: ['null', 'double'],
+                            },
+                        ],
                     },
                 ],
             },
@@ -711,13 +716,14 @@ describe('recursive types', function() {
                     },
                     {
                         name: 'type',
-                        default: [],
-                        type: 'array',
-                        items: {
-                            default: null,
-                            name: 'typeItem',
-                            type: ['null', 'double'],
-                        },
+                        default: null,
+                        type: [
+                            'null',
+                            {
+                                type: 'array',
+                                items: ['null', 'double'],
+                            },
+                        ],
                     },
                 ],
             },
@@ -739,13 +745,15 @@ describe('recursive types', function() {
 
         let expected = [
             {
+                default: null,
                 name: 'some',
-                type: 'array',
-                items: {
-                    name: 'someItem',
-                    default: null,
-                    type: ['null', 'double'],
-                },
+                type: [
+                    'null',
+                    {
+                        type: 'array',
+                        items: ['null', 'double'],
+                    },
+                ],
             },
         ];
 
@@ -763,13 +771,14 @@ describe('recursive types', function() {
         let expected = [
             {
                 name: 'some',
-                type: 'array',
-                items: {
-                    name: 'someItem',
-                    default: null,
-                    type: ['null', 'double'],
-                },
-                default: [],
+                type: [
+                    'null',
+                    {
+                        type: 'array',
+                        items: ['null', 'double'],
+                    },
+                ],
+                default: null,
             },
         ];
 
@@ -792,23 +801,28 @@ describe('recursive types', function() {
         let expected = [
             {
                 name: 'some',
-                type: 'array',
-                items: {
-                    name: 'someItem',
-                    type: 'record',
-                    fields: [
-                        {
-                            name: 'thingB',
-                            type: 'double',
+                type: [
+                    'null',
+                    {
+                        type: 'array',
+                        items: {
+                            name: 'someItem',
+                            type: 'record',
+                            fields: [
+                                {
+                                    name: 'thingB',
+                                    type: 'double',
+                                },
+                                {
+                                    name: 'thingA',
+                                    type: ['null', 'string'],
+                                    default: null,
+                                },
+                            ],
                         },
-                        {
-                            name: 'thingA',
-                            type: ['null', 'string'],
-                            default: null,
-                        },
-                    ],
-                },
-                default: [],
+                    },
+                ],
+                default: null,
             },
         ];
 
@@ -826,18 +840,67 @@ describe('recursive types', function() {
         let expected = [
             {
                 name: 'some',
-                type: 'array',
-                items: {
-                    name: 'someItem',
-                    type: 'array',
-                    items: {
-                        name: 'someItemItem',
-                        type: ['null', 'string'],
-                        default: null,
+                type: [
+                    'null',
+                    {
+                        type: 'array',
+                        items: [
+                            'null',
+                            {
+                                type: 'array',
+                                items: ['null', 'string'],
+                            },
+                        ],
                     },
-                    default: [],
-                },
-                default: [],
+                ],
+                default: null,
+            },
+        ];
+
+        let result = mongooseAvroSchemaGenerator.generate();
+
+        assertHasFields(result, expected);
+    });
+
+    it('parses array of arrays of records', function() {
+        let schema = new Schema({
+            some: [
+                [
+                    {
+                        thing: String,
+                    },
+                ],
+            ],
+        });
+        mongoose.model('test', schema);
+
+        let expected = [
+            {
+                name: 'some',
+                type: [
+                    'null',
+                    {
+                        type: 'array',
+                        items: [
+                            'null',
+                            {
+                                type: 'array',
+                                items: {
+                                    name: 'someItemItem',
+                                    type: 'record',
+                                    fields: [
+                                        {
+                                            name: 'thing',
+                                            type: ['null', 'string'],
+                                            default: null,
+                                        },
+                                    ],
+                                },
+                            },
+                        ],
+                    },
+                ],
+                default: null,
             },
         ];
 
@@ -861,13 +924,14 @@ describe('recursive types', function() {
                 fields: [
                     {
                         name: 'thing',
-                        type: 'array',
-                        items: {
-                            name: 'thingItem',
-                            type: ['null', 'string'],
-                            default: null,
-                        },
-                        default: [],
+                        type: [
+                            'null',
+                            {
+                                type: 'array',
+                                items: ['null', 'string'],
+                            },
+                        ],
+                        default: null,
                     },
                 ],
             },
@@ -947,7 +1011,42 @@ describe('example from readme', function() {
         cleanupModels();
     });
 
-    it('matches the example from the README.md', function() {
+    it('matches the array with record example from the README.md', function() {
+        let schema = new Schema({
+            some: [{ thing: String }],
+        });
+        mongoose.model('mySchema', schema);
+
+        let expected = [
+            {
+                name: 'some',
+                type: [
+                    'null',
+                    {
+                        type: 'array',
+                        items: {
+                            name: 'someItem',
+                            type: 'record',
+                            fields: [
+                                {
+                                    name: 'thing',
+                                    type: ['null', 'string'],
+                                    default: null,
+                                },
+                            ],
+                        },
+                    },
+                ],
+                default: null,
+            },
+        ];
+
+        let result = mongooseAvroSchemaGenerator.generate();
+
+        assertHasFields(result, expected);
+    });
+
+    it('matches the main example from the README.md', function() {
         let schema = new Schema({
             something: { type: [[Number]], default: ['foo'] },
             else: [String],
@@ -960,29 +1059,32 @@ describe('example from readme', function() {
                 dbtype: 'mongodb',
                 fields: [
                     {
-                        default: ['foo'],
-                        items: {
-                            default: [],
-                            items: {
-                                default: null,
-                                name: 'somethingItemItem',
-                                type: ['null', 'double'],
-                            },
-                            name: 'somethingItem',
-                            type: 'array',
-                        },
                         name: 'something',
-                        type: 'array',
+                        default: null,
+                        type: [
+                            'null',
+                            {
+                                type: 'array',
+                                items: [
+                                    'null',
+                                    {
+                                        items: ['null', 'double'],
+                                        type: 'array',
+                                    },
+                                ],
+                            },
+                        ],
                     },
                     {
-                        default: [],
-                        items: {
-                            default: null,
-                            name: 'elseItem',
-                            type: ['null', 'string'],
-                        },
                         name: 'else',
-                        type: 'array',
+                        type: [
+                            'null',
+                            {
+                                items: ['null', 'string'],
+                                type: 'array',
+                            },
+                        ],
+                        default: null,
                     },
                     {
                         default: null,

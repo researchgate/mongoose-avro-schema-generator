@@ -109,11 +109,20 @@ let parseObject = (key, object) => {
 };
 
 let parseArray = (key, array) => {
-    return {
-        name: key,
+    let items = parse(key + 'Item', array[0]);
+    if (items.type !== 'record') {
+        items = items.type;
+    }
+
+    let type = {
         type: AVRO_TYPE_ARRAY,
-        items: parse(key + 'Item', array[0]),
+        items: items,
     };
+
+    let result = addNull(type);
+
+    result.name = key;
+    return result;
 };
 
 let parsePrimitive = (key, primitive) => {
@@ -227,13 +236,8 @@ let addNull = typeDefinition => {
 
 let getDefault = (typeDefinition, object) => {
     // if a default is defined inside the object and not a function, we use that
-    if (object.hasOwnProperty('default') && typeof object.default !== 'function') {
+    if (object.hasOwnProperty('default') && !isArrayObject(object) && typeof object.default !== 'function') {
         return object.default;
-    }
-
-    // if object is an array the default will be set to [] unless a default is defined explicitly
-    if (object instanceof Array) {
-        return [];
     }
 
     // if the type allows null we allow null as default
