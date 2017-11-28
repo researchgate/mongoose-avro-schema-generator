@@ -237,4 +237,7 @@ Then `mongoosevroSchemaGenerator.generate(['mySchema'], { namespace: 'some.names
 ]
 ```
 
+## Running tests
+Mocha tests for Mongoose Avro Schema Generator can be found in `/test`. A yarn job is configured to run those tests using `yarn test`.
+
 
