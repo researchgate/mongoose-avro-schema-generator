@@ -106,6 +106,7 @@ The following table lists all the primitive types and their mapped equivalent in
 | `Buffer` | `"bytes"` |
 | `Date` | `{ "type": "long", "subtype": "date" }` |
 | `Schema.Types.ObjectId` | `{ "type": "string", "subtype": "objectid" }` |
+
 Please note that `Date` and `Schema.Types.ObjectId` are mapped to objects with a more specific subtype.
 
 Warning: The `Schema.Types.Mixed` type is not supported, as well as the equivalent empty object literal `{}` or the empty array `[]`. Trying to generate a schema from a model with such a type will result in an error.
