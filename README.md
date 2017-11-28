@@ -122,8 +122,7 @@ is getting mapped to the following field in the avro schema:
         "null", 
         {
             "type": "array",
-            "items": ["null", "double"],
-            "default": null    
+            "items": ["null", "double"]
         }
     ],
     "default": null
