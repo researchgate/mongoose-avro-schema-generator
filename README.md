@@ -48,12 +48,11 @@ Then `mongooseAvroSchemaGenerator.generate()` will output an array of all genera
         "dbtype": "mongodb",
         "fields": [
             {
-                "default": null,
                 "name": "something",
-                "type": ["null", "string"]
+                "type": ["null", "string"],
+                "default": null
             },
             {
-                "default": null,
                 "name": "_id",
                 "type": [
                     "null",
@@ -61,12 +60,13 @@ Then `mongooseAvroSchemaGenerator.generate()` will output an array of all genera
                         "subtype": "objectid",
                         "type": "string"
                     }
-                ]
+                ],
+                "default": null
             },
             {
-                "default": null,
                 "name": "__v",
-                "type": ["null", "double"]
+                "type": ["null", "double"],
+                "default": null
             }
         ],
         "name": "mySchema",
@@ -192,9 +192,9 @@ mongoose.model('mySchema', schema);
 will have union type of `null` and `string`
 ```json
 {
-    "default": null,
     "name": "something",
-    "type": ["null", "string"]
+    "type": ["null", "string"],
+    "default": null
 }
 ```
 However if we add the required attribute
@@ -226,9 +226,9 @@ new Schema({
 will lead to an avro schema with the following field
 ```json
 {
-    "default": "foo",
     "name": "something",
-    "type": ["null", "string"]
+    "type": ["null", "string"],
+    "default": "foo"
 }
 ```
 Arrays will always have a default of `null`.
