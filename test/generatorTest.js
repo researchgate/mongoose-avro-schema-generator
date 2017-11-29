@@ -4,8 +4,20 @@ const assert = require('assert');
 const mongoose = require('mongoose');
 const mongooseAvroSchemaGenerator = require('../src/generator');
 const cleanupModels = require('./cleanupModels');
-
 const Schema = mongoose.Schema;
+
+describe('initialization', function() {
+    it('throws exception if generator was not initialized', function() {
+        assert.throws(() => {
+            mongooseAvroSchemaGenerator.generate();
+        }, /Mongoose Avro Schema Generator was not initialized/);
+    });
+
+    it('throws no exception if generator was initialized', function() {
+        mongooseAvroSchemaGenerator.init(mongoose);
+        mongooseAvroSchemaGenerator.generate();
+    });
+});
 
 describe('schema meta data', function() {
     const MODEL_NAME = 'test';

@@ -2,4 +2,7 @@
 
 const generator = require('./generator');
 
-module.exports = { generate: generator.generate };
+module.exports = {
+    init: generator.init,
+    generate: generator.generate,
+};

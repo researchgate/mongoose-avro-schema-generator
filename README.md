@@ -36,9 +36,10 @@ let schema = new Schema({
 });
 mongoose.model('mySchema', schema);
 ```
-Now we import the Mongoose Avro Schema Generator.
+Now we import the Mongoose Avro Schema Generator and initialize it with the mongoose instance we registered our model with.
 ```js
 const mongooseAvroSchemaGenerator = require('mongoose-avro-schema-generator');
+mongooseAvroSchemaGenerator.init(mongoose);
 ```
 Then `mongooseAvroSchemaGenerator.generate()` will output an array of all generated schemas.
 ```json
@@ -239,6 +240,7 @@ Let's register a schema with mongoose.
 ```js
 const mongoose = require('mongoose');
 const mongooseAvroSchemaGenerator = require('mongoose-avro-schema-generator');
+mongooseAvroSchemaGenerator.init(mongoose);
 
 let schema = new Schema({
     something: { type: [[Number]], default: ['foo'] },

@@ -50,6 +50,7 @@ const IGNORED_TYPES = [mongoose.VirtualType]; // We ignore the virtual type sinc
 const UNSUPPORTED_TYPES = [Schema.Types.Mixed]; // We cannot support the mixed type because avro has to know the actual type.
 
 let namespace = 'mongoose';
+let mongooseInstance;
 
 let parse = (key, object) => {
     let result = parseDelegated(key, object);
@@ -248,18 +249,28 @@ let getDefault = (typeDefinition, object) => {
     return undefined;
 };
 
+let init = mongoose => {
+    mongooseInstance = mongoose;
+};
+
 let generate = (models = [], options = {}) => {
+    if (!mongooseInstance) {
+        throw new Error(
+            'Mongoose Avro Schema Generator was not initialized. Please run the init() method and pass a mongoose instance',
+        );
+    }
+
     let results = [];
     namespace = options.namespace || namespace;
 
     if (models.length === 0) {
-        models = mongoose.modelNames();
+        models = mongooseInstance.modelNames();
     }
 
     models.forEach(name => {
         let model;
         try {
-            model = mongoose.model(name);
+            model = mongooseInstance.model(name);
         } catch (err) {
             throw new Error(`Could not find mongoose schema "${name}": ${err.message}`);
         }
@@ -283,5 +294,6 @@ let generate = (models = [], options = {}) => {
 };
 
 module.exports = {
+    init: init,
     generate: generate,
 };
