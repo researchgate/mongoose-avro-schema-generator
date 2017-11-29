@@ -22,6 +22,10 @@ describe('initialization', function() {
 describe('schema meta data', function() {
     const MODEL_NAME = 'test';
 
+    before(function() {
+        mongooseAvroSchemaGenerator.init(mongoose);
+    });
+
     beforeEach(function() {
         let schema = new Schema({});
         mongoose.model(MODEL_NAME, schema);
@@ -88,6 +92,10 @@ describe('schema meta data', function() {
 });
 
 describe('primitive types', function() {
+    before(function() {
+        mongooseAvroSchemaGenerator.init(mongoose);
+    });
+
     afterEach(function() {
         cleanupModels();
     });
@@ -291,6 +299,10 @@ describe('primitive types', function() {
 });
 
 describe('nullable', function() {
+    before(function() {
+        mongooseAvroSchemaGenerator.init(mongoose);
+    });
+
     afterEach(function() {
         cleanupModels();
     });
@@ -394,6 +406,10 @@ describe('nullable', function() {
 });
 
 describe('defaults', function() {
+    before(function() {
+        mongooseAvroSchemaGenerator.init(mongoose);
+    });
+
     afterEach(function() {
         cleanupModels();
     });
@@ -519,6 +535,10 @@ describe('defaults', function() {
 });
 
 describe('unallowed types', function() {
+    before(function() {
+        mongooseAvroSchemaGenerator.init(mongoose);
+    });
+
     afterEach(function() {
         cleanupModels();
     });
@@ -569,6 +589,10 @@ describe('unallowed types', function() {
 });
 
 describe('recursive types', function() {
+    before(function() {
+        mongooseAvroSchemaGenerator.init(mongoose);
+    });
+
     afterEach(function() {
         cleanupModels();
     });
@@ -978,6 +1002,10 @@ describe('recursive types', function() {
 });
 
 describe('multiple models', function() {
+    before(function() {
+        mongooseAvroSchemaGenerator.init(mongoose);
+    });
+
     beforeEach(function() {
         let schema1 = new Schema({
             some: Number,
@@ -1019,6 +1047,10 @@ describe('multiple models', function() {
 });
 
 describe('example from readme', function() {
+    before(function() {
+        mongooseAvroSchemaGenerator.init(mongoose);
+    });
+
     afterEach(function() {
         cleanupModels();
     });
