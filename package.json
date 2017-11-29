@@ -1,18 +1,12 @@
 {
   "name": "@researchgate/mongoose-avro-schema-generator",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Generates Apache Avro schemas from mongoose schemas.",
   "repository": {
     "type": "git",
     "url": "https://github.com/researchgate/mongoose-avro-schema-generator"
   },
-  "main": "lib/js/index.js",
-  "module": "lib/es/index.js",
-  "bin": "lib/js/bin/index.js",
-  "files": [
-    "lib",
-    "dist"
-  ],
+  "main": "src/index.js",
   "scripts": {
     "create-github-release": "conventional-github-releaser -p angular",
     "format": "eslint --fix src/",
