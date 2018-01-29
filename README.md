@@ -233,6 +233,8 @@ will be transformed into an avro schema containing the following field
 }
 ```
 Arrays will always have a default of `null`.
+
+Important: Functional default values are not supported and will be ignored, i.e. treated as if the field doesn't have any default.
 ##### Implicit Defaults
 If a field can be null and no explicit default value is defined, the default will be set to `null`.
 
