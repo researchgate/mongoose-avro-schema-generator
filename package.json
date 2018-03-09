@@ -53,7 +53,7 @@
     "standard-version": "^4.2.0"
   },
   "dependencies": {
-    "mongoose": "^4.13.4"
+    "mongoose": "^5.0.9"
   },
   "engines": {
     "node": ">=9.2.0",

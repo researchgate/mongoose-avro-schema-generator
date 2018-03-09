@@ -1,5 +1,6 @@
 'use strict';
 
+const describe = require('mocha').describe;
 const assert = require('assert');
 const mongoose = require('mongoose');
 const mongooseAvroSchemaGenerator = require('../src/generator');
@@ -666,14 +667,14 @@ describe('recursive types', function() {
                 type: 'record',
                 fields: [
                     {
-                        name: 'thing',
-                        default: null,
-                        type: ['null', 'string'],
-                    },
-                    {
                         name: 'type',
                         default: null,
                         type: ['null', 'double'],
+                    },
+                    {
+                        name: 'thing',
+                        default: null,
+                        type: ['null', 'string'],
                     },
                 ],
             },
@@ -699,11 +700,6 @@ describe('recursive types', function() {
                 type: 'record',
                 fields: [
                     {
-                        name: 'thing',
-                        default: null,
-                        type: ['null', 'string'],
-                    },
-                    {
                         default: null,
                         name: 'type',
                         type: [
@@ -713,6 +709,11 @@ describe('recursive types', function() {
                                 items: ['null', 'double'],
                             },
                         ],
+                    },
+                    {
+                        name: 'thing',
+                        default: null,
+                        type: ['null', 'string'],
                     },
                 ],
             },
@@ -740,17 +741,6 @@ describe('recursive types', function() {
                 type: 'record',
                 fields: [
                     {
-                        name: 'thing',
-                        type: 'record',
-                        fields: [
-                            {
-                                name: 'other',
-                                type: ['null', 'string'],
-                                default: null,
-                            },
-                        ],
-                    },
-                    {
                         name: 'type',
                         default: null,
                         type: [
@@ -758,6 +748,17 @@ describe('recursive types', function() {
                             {
                                 type: 'array',
                                 items: ['null', 'double'],
+                            },
+                        ],
+                    },
+                    {
+                        name: 'thing',
+                        type: 'record',
+                        fields: [
+                            {
+                                name: 'other',
+                                type: ['null', 'string'],
+                                default: null,
                             },
                         ],
                     },
@@ -846,13 +847,13 @@ describe('recursive types', function() {
                             type: 'record',
                             fields: [
                                 {
-                                    name: 'thingB',
-                                    type: 'double',
-                                },
-                                {
                                     name: 'thingA',
                                     type: ['null', 'string'],
                                     default: null,
+                                },
+                                {
+                                    name: 'thingB',
+                                    type: 'double',
                                 },
                             ],
                         },

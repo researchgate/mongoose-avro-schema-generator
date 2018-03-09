@@ -14,7 +14,7 @@ A node module that generates Apache avro schemas from mongoose schemas.
 
 ## Getting Started
 ### Prerequesites
-The Mongoose Avro Schema Generator requires `node >= 9.2.0`. The only dependency is `mongoose >= 4.13`, a connection to MongoDB is not necessary.
+The Mongoose Avro Schema Generator requires `node >= 9.2.0`. The only dependency is `mongoose >= 5.0.9`, a connection to MongoDB is not necessary.
 
 ### Installation
 Using yarn:
