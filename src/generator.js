@@ -102,11 +102,16 @@ let parseObject = (key, object) => {
         }
     }
 
-    return {
+    let type = {
+        name: key + 'Embedded',
         type: AVRO_TYPE_RECORD,
         fields: fields,
-        name: key,
     };
+
+    let result = addNull(type);
+    result.name = key;
+
+    return result;
 };
 
 let parseArray = (key, array) => {
@@ -283,6 +288,11 @@ let generate = (models = [], options = {}) => {
         } catch (err) {
             throw new Error(`An error occured while parsing schema "${name}": ${err.message}`);
         }
+
+        // convert the record to a schema object
+        document.fields = document.type[1].fields;
+        delete document.type;
+        delete document.default;
 
         document.dbtype = 'mongodb';
         document.namespace = namespace;

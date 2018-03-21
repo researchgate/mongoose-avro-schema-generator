@@ -45,13 +45,18 @@ describe('schema meta data', function() {
         assertHasAttributes(result, expected);
     });
 
-    it('has type record', function() {
-        let expected = {
-            type: 'record',
-        };
+    it('does not have a type', function() {
+        let unexpectedFields = ['type'];
         let result = mongooseAvroSchemaGenerator.generate();
 
-        assertHasAttributes(result, expected);
+        assertNotHasAttributes(result, unexpectedFields);
+    });
+
+    it('does not have a default', function() {
+        let unexpectedFields = ['default'];
+        let result = mongooseAvroSchemaGenerator.generate();
+
+        assertNotHasAttributes(result, unexpectedFields);
     });
 
     it('has dbtype mongodb', function() {
@@ -609,14 +614,21 @@ describe('recursive types', function() {
         let expected = [
             {
                 name: 'some',
-                type: 'record',
-                fields: [
+                type: [
+                    'null',
                     {
-                        name: 'thing',
-                        default: null,
-                        type: ['null', 'double'],
+                        name: 'someEmbedded',
+                        type: 'record',
+                        fields: [
+                            {
+                                name: 'thing',
+                                default: null,
+                                type: ['null', 'double'],
+                            },
+                        ],
                     },
                 ],
+                default: null,
             },
         ];
 
@@ -636,14 +648,21 @@ describe('recursive types', function() {
         let expected = [
             {
                 name: 'some',
-                type: 'record',
-                fields: [
+                type: [
+                    'null',
                     {
-                        name: 'type',
-                        default: null,
-                        type: ['null', 'double'],
+                        name: 'someEmbedded',
+                        type: 'record',
+                        fields: [
+                            {
+                                name: 'type',
+                                default: null,
+                                type: ['null', 'double'],
+                            },
+                        ],
                     },
                 ],
+                default: null,
             },
         ];
 
@@ -664,19 +683,26 @@ describe('recursive types', function() {
         let expected = [
             {
                 name: 'some',
-                type: 'record',
-                fields: [
+                type: [
+                    'null',
                     {
-                        name: 'type',
-                        default: null,
-                        type: ['null', 'double'],
-                    },
-                    {
-                        name: 'thing',
-                        default: null,
-                        type: ['null', 'string'],
+                        name: 'someEmbedded',
+                        type: 'record',
+                        fields: [
+                            {
+                                name: 'type',
+                                default: null,
+                                type: ['null', 'double'],
+                            },
+                            {
+                                name: 'thing',
+                                default: null,
+                                type: ['null', 'string'],
+                            },
+                        ],
                     },
                 ],
+                default: null,
             },
         ];
 
@@ -697,25 +723,32 @@ describe('recursive types', function() {
         let expected = [
             {
                 name: 'some',
-                type: 'record',
-                fields: [
+                type: [
+                    'null',
                     {
-                        default: null,
-                        name: 'type',
-                        type: [
-                            'null',
+                        name: 'someEmbedded',
+                        type: 'record',
+                        fields: [
                             {
-                                type: 'array',
-                                items: ['null', 'double'],
+                                default: null,
+                                name: 'type',
+                                type: [
+                                    'null',
+                                    {
+                                        type: 'array',
+                                        items: ['null', 'double'],
+                                    },
+                                ],
+                            },
+                            {
+                                name: 'thing',
+                                default: null,
+                                type: ['null', 'string'],
                             },
                         ],
                     },
-                    {
-                        name: 'thing',
-                        default: null,
-                        type: ['null', 'string'],
-                    },
                 ],
+                default: null,
             },
         ];
 
@@ -724,7 +757,7 @@ describe('recursive types', function() {
         assertHasFields(result, expected);
     });
 
-    it('parses embedded documents with key "type" that also contains an embedded document', function() {
+    it('parses embedded documents with key "type" that also contain an embedded document', function() {
         let schema = new Schema({
             some: {
                 type: [Number],
@@ -738,31 +771,45 @@ describe('recursive types', function() {
         let expected = [
             {
                 name: 'some',
-                type: 'record',
-                fields: [
+                type: [
+                    'null',
                     {
-                        name: 'type',
-                        default: null,
-                        type: [
-                            'null',
-                            {
-                                type: 'array',
-                                items: ['null', 'double'],
-                            },
-                        ],
-                    },
-                    {
-                        name: 'thing',
+                        name: 'someEmbedded',
                         type: 'record',
                         fields: [
                             {
-                                name: 'other',
-                                type: ['null', 'string'],
+                                name: 'type',
+                                default: null,
+                                type: [
+                                    'null',
+                                    {
+                                        type: 'array',
+                                        items: ['null', 'double'],
+                                    },
+                                ],
+                            },
+                            {
+                                name: 'thing',
+                                type: [
+                                    'null',
+                                    {
+                                        type: 'record',
+                                        name: 'thingEmbedded',
+                                        fields: [
+                                            {
+                                                name: 'other',
+                                                type: ['null', 'string'],
+                                                default: null,
+                                            },
+                                        ],
+                                    },
+                                ],
                                 default: null,
                             },
                         ],
                     },
                 ],
+                default: null,
             },
         ];
 
@@ -842,21 +889,24 @@ describe('recursive types', function() {
                     'null',
                     {
                         type: 'array',
-                        items: {
-                            name: 'someItem',
-                            type: 'record',
-                            fields: [
-                                {
-                                    name: 'thingA',
-                                    type: ['null', 'string'],
-                                    default: null,
-                                },
-                                {
-                                    name: 'thingB',
-                                    type: 'double',
-                                },
-                            ],
-                        },
+                        items: [
+                            'null',
+                            {
+                                type: 'record',
+                                name: 'someItemEmbedded',
+                                fields: [
+                                    {
+                                        name: 'thingA',
+                                        type: ['null', 'string'],
+                                        default: null,
+                                    },
+                                    {
+                                        name: 'thingB',
+                                        type: 'double',
+                                    },
+                                ],
+                            },
+                        ],
                     },
                 ],
                 default: null,
@@ -922,17 +972,20 @@ describe('recursive types', function() {
                             'null',
                             {
                                 type: 'array',
-                                items: {
-                                    name: 'someItemItem',
-                                    type: 'record',
-                                    fields: [
-                                        {
-                                            name: 'thing',
-                                            type: ['null', 'string'],
-                                            default: null,
-                                        },
-                                    ],
-                                },
+                                items: [
+                                    'null',
+                                    {
+                                        name: 'someItemItemEmbedded',
+                                        type: 'record',
+                                        fields: [
+                                            {
+                                                name: 'thing',
+                                                type: ['null', 'string'],
+                                                default: null,
+                                            },
+                                        ],
+                                    },
+                                ],
                             },
                         ],
                     },
@@ -957,20 +1010,27 @@ describe('recursive types', function() {
         let expected = [
             {
                 name: 'some',
-                type: 'record',
-                fields: [
+                type: [
+                    'null',
                     {
-                        name: 'thing',
-                        type: [
-                            'null',
+                        name: 'someEmbedded',
+                        type: 'record',
+                        fields: [
                             {
-                                type: 'array',
-                                items: ['null', 'string'],
+                                name: 'thing',
+                                type: [
+                                    'null',
+                                    {
+                                        type: 'array',
+                                        items: ['null', 'string'],
+                                    },
+                                ],
+                                default: null,
                             },
                         ],
-                        default: null,
                     },
                 ],
+                default: null,
             },
         ];
 
@@ -1069,17 +1129,20 @@ describe('example from readme', function() {
                     'null',
                     {
                         type: 'array',
-                        items: {
-                            name: 'someItem',
-                            type: 'record',
-                            fields: [
-                                {
-                                    name: 'thing',
-                                    type: ['null', 'string'],
-                                    default: null,
-                                },
-                            ],
-                        },
+                        items: [
+                            'null',
+                            {
+                                name: 'someItemEmbedded',
+                                type: 'record',
+                                fields: [
+                                    {
+                                        name: 'thing',
+                                        type: ['null', 'string'],
+                                        default: null,
+                                    },
+                                ],
+                            },
+                        ],
                     },
                 ],
                 default: null,
@@ -1150,7 +1213,6 @@ describe('example from readme', function() {
                 ],
                 name: 'mySchema',
                 namespace: 'some.namespace',
-                type: 'record',
             },
         ];
 
@@ -1173,6 +1235,20 @@ let assertHasAttributes = (result, attributes) => {
             );
         }
     }
+};
+
+let assertNotHasAttributes = (result, attributes) => {
+    assert(result.length === 1, 'Result did not contain exactly one schema');
+
+    let violations = [];
+
+    Object.keys(result[0]).forEach(attribute => {
+        if (attributes.includes(attribute)) {
+            violations.push(attribute);
+        }
+    });
+
+    assert(violations.length === 0, `Found unexpected attribute fields ${violations.join(',')}`);
 };
 
 let assertHasFields = (result, fields) => {
