@@ -28,7 +28,7 @@ npm install @researchgate/mongoose-avro-schema-generator
 ```
 
 ### Quick Start
-In order to generate schemas for all registered mongoose models we just import the module and run the `generate()` method.
+In order to generate schemas for all registered mongoose models we import the module, create a new `MongooseAvroSchemaGenerator` and run the `generate()` method.
 
 Let's first register a simple mongoose model.
 ```js
@@ -37,10 +37,10 @@ let schema = new Schema({
 });
 mongoose.model('mySchema', schema);
 ```
-Now we import the Mongoose Avro Schema Generator and initialize it with the mongoose instance we registered our model with.
+Now we instantiate the Mongoose Avro Schema Generator with a the mongoose instance.
 ```js
-const mongooseAvroSchemaGenerator = require('mongoose-avro-schema-generator');
-mongooseAvroSchemaGenerator.init(mongoose);
+const Generator = require('mongoose-avro-schema-generator');
+const mongooseAvroSchemaGenerator = new Generator(mongoose);
 ```
 Then `mongooseAvroSchemaGenerator.generate()` will output an array of all generated schemas.
 ```json
@@ -87,9 +87,9 @@ Restrict the schema generation to a set of models:
 ```js
 mongooseAvroSchemaGenerator.generate(['User', 'Transaction']);
 ```
-Override the default "mongoose" namespace by setting the `namespace` parameter in the options array: 
+Override the default "mongoose" namespace by setting the second parameter in the constructor: 
 ```js
-mongooseAvroSchemaGenerator.generate([], { namespace: 'some.custom.namespace' });
+new Generator(mongoose, 'some.custom.namespace');
 ```
 
 ## Mapping

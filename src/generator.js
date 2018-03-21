@@ -1,8 +1,5 @@
 'use strict';
 
-const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
-
 const KEY_TYPE = 'type';
 const KEY_DEFAULT = 'default';
 const AVRO_TYPE_RECORD = 'record';
@@ -13,297 +10,290 @@ const AVRO_TYPE_BOOLEAN = 'boolean';
 const AVRO_TYPE_DOUBLE = 'double';
 const AVRO_TYPE_BYTES = 'bytes';
 
-const TYPE_MAPPING = [
-    {
-        sources: [String, Schema.Types.String],
-        typeDefinition: AVRO_TYPE_STRING,
-    },
-    {
-        sources: [Boolean, Schema.Types.Boolean],
-        typeDefinition: AVRO_TYPE_BOOLEAN,
-    },
-    {
-        sources: [Number, Schema.Types.Number],
-        typeDefinition: AVRO_TYPE_DOUBLE,
-    },
-    {
-        sources: [Buffer],
-        typeDefinition: AVRO_TYPE_BYTES,
-    },
-    {
-        sources: [Date],
-        typeDefinition: {
-            type: AVRO_TYPE_LONG,
-            subtype: 'date',
-        },
-    },
-    {
-        sources: [Schema.Types.ObjectId],
-        typeDefinition: {
-            type: AVRO_TYPE_STRING,
-            subtype: 'objectid',
-        },
-    },
-];
+class Generator {
+    constructor(mongoose, namespace = 'mongoose') {
+        this.mongoose = mongoose;
+        this.namespace = namespace;
 
-const IGNORED_TYPES = [mongoose.VirtualType]; // We ignore the virtual type since it is only used internally by mongoose.
-const UNSUPPORTED_TYPES = [Schema.Types.Mixed]; // We cannot support the mixed type because avro has to know the actual type.
-
-let namespace = 'mongoose';
-let mongooseInstance;
-
-let parse = (key, object) => {
-    let result = parseDelegated(key, object);
-    let defaultValue = getDefault(result.type, object);
-
-    if (typeof defaultValue !== 'undefined') {
-        result.default = defaultValue;
+        this._initializeMongooseTypeMapping(mongoose);
     }
 
-    return result;
-};
+    generate(models = []) {
+        let results = [];
 
-let parseDelegated = (key, object) => {
-    if (object instanceof Array) {
-        return parseArray(key, object);
-    }
-
-    let type = typeof object;
-
-    if (isUnsupportedType(object)) {
-        throw new Error('Unsupported type ' + object);
-    }
-
-    if (type === 'function' && isPrimitive(object)) {
-        return parsePrimitive(key, object);
-    }
-
-    if (type === 'object' && !isEmptyObject(object)) {
-        if (isArrayObject(object)) {
-            return parseArray(key, object.type);
+        if (models.length === 0) {
+            models = this.mongoose.modelNames();
         }
 
-        if (isPrimitiveObject(object)) {
-            return parsePrimitiveObject(key, object);
+        models.forEach(name => {
+            let model;
+            try {
+                model = this.mongoose.model(name);
+            } catch (err) {
+                throw new Error(`Could not find mongoose schema "${name}": ${err.message}`);
+            }
+
+            let schema = model.schema.tree;
+            let document;
+
+            try {
+                document = this._parse(name, schema);
+            } catch (err) {
+                throw new Error(`An error occured while parsing schema "${name}": ${err.message}`);
+            }
+
+            // convert the record to a schema object
+            document.fields = document.type[1].fields;
+            delete document.type;
+            delete document.default;
+
+            document.dbtype = 'mongodb';
+            document.namespace = this.namespace;
+            document.dbcollection = model.collection.name;
+            results.push(document);
+        });
+
+        return results;
+    }
+
+    _initializeMongooseTypeMapping(mongoose) {
+        this.typeMapping = [
+            {
+                sources: [String, mongoose.Schema.Types.String],
+                typeDefinition: AVRO_TYPE_STRING,
+            },
+            {
+                sources: [Boolean, mongoose.Schema.Types.Boolean],
+                typeDefinition: AVRO_TYPE_BOOLEAN,
+            },
+            {
+                sources: [Number, mongoose.Schema.Types.Number],
+                typeDefinition: AVRO_TYPE_DOUBLE,
+            },
+            {
+                sources: [Buffer],
+                typeDefinition: AVRO_TYPE_BYTES,
+            },
+            {
+                sources: [Date],
+                typeDefinition: {
+                    type: AVRO_TYPE_LONG,
+                    subtype: 'date',
+                },
+            },
+            {
+                sources: [mongoose.Schema.Types.ObjectId],
+                typeDefinition: {
+                    type: AVRO_TYPE_STRING,
+                    subtype: 'objectid',
+                },
+            },
+        ];
+        this.ignoredTypes = [mongoose.VirtualType]; // We ignore the virtual type since it is only used internally by mongoose.
+        this.unsupportedTypes = [mongoose.Schema.Types.Mixed]; // We cannot support the mixed type because avro has to know the actual type.
+    }
+
+    _parse(key, object) {
+        let result = this._parseDelegated(key, object);
+        let defaultValue = this._getDefault(result.type, object);
+
+        if (typeof defaultValue !== 'undefined') {
+            result.default = defaultValue;
         }
 
-        return parseObject(key, object);
+        return result;
     }
 
-    throw new Error('Unable to parse entity ' + key + ': ' + object);
-};
-
-let parseObject = (key, object) => {
-    let fields = [];
-    for (let name in object) {
-        if (object.hasOwnProperty(name) && !isIgnoredType(object[name])) {
-            let field = parse(name, object[name]);
-            fields.push(field);
+    _parseDelegated(key, object) {
+        if (object instanceof Array) {
+            return this._parseArray(key, object);
         }
+
+        let type = typeof object;
+
+        if (this._isUnsupportedType(object)) {
+            throw new Error('Unsupported type ' + object);
+        }
+
+        if (type === 'function' && this._isPrimitive(object)) {
+            return this._parsePrimitive(key, object);
+        }
+
+        if (type === 'object' && !Generator._isEmptyObject(object)) {
+            if (this._isArrayObject(object)) {
+                return this._parseArray(key, object.type);
+            }
+
+            if (this._isPrimitiveObject(object)) {
+                return this._parsePrimitiveObject(key, object);
+            }
+
+            return this._parseObject(key, object);
+        }
+
+        throw new Error('Unable to parse entity ' + key + ': ' + object);
     }
 
-    let type = {
-        name: key + 'Embedded',
-        type: AVRO_TYPE_RECORD,
-        fields: fields,
-    };
+    _parseObject(key, object) {
+        let fields = [];
+        for (let name in object) {
+            if (object.hasOwnProperty(name) && !this._isIgnoredType(object[name])) {
+                let field = this._parse(name, object[name]);
+                fields.push(field);
+            }
+        }
 
-    let result = addNull(type);
-    result.name = key;
+        let type = {
+            name: key + 'Embedded',
+            type: AVRO_TYPE_RECORD,
+            fields: fields,
+        };
 
-    return result;
-};
+        let result = Generator._addNull(type);
+        result.name = key;
 
-let parseArray = (key, array) => {
-    let items = parse(key + 'Item', array[0]);
-    if (items.type !== 'record') {
-        items = items.type;
+        return result;
     }
 
-    let type = {
-        type: AVRO_TYPE_ARRAY,
-        items: items,
-    };
+    _parseArray(key, array) {
+        let items = this._parse(key + 'Item', array[0]);
+        if (items.type !== 'record') {
+            items = items.type;
+        }
 
-    let result = addNull(type);
+        let type = {
+            type: AVRO_TYPE_ARRAY,
+            items: items,
+        };
 
-    result.name = key;
-    return result;
-};
+        let result = Generator._addNull(type);
 
-let parsePrimitive = (key, primitive) => {
-    let mappedType = getMappedType(primitive);
-    mappedType = addNull(mappedType);
+        result.name = key;
+        return result;
+    }
 
-    return Object.assign({ name: key }, mappedType);
-};
+    _parsePrimitive(key, primitive) {
+        let mappedType = this._getMappedType(primitive);
+        mappedType = Generator._addNull(mappedType);
 
-let parsePrimitiveObject = (key, primitiveObject) => {
-    let mappedType = getMappedType(primitiveObject.type);
-    if (!isRequired(primitiveObject)) {
-        mappedType = addNull(mappedType);
         return Object.assign({ name: key }, mappedType);
     }
 
-    mappedType = { type: mappedType };
+    _parsePrimitiveObject(key, primitiveObject) {
+        let mappedType = this._getMappedType(primitiveObject.type);
+        if (!Generator._isRequired(primitiveObject)) {
+            mappedType = Generator._addNull(mappedType);
+            return Object.assign({ name: key }, mappedType);
+        }
 
-    return Object.assign({ name: key }, mappedType);
-};
+        mappedType = { type: mappedType };
 
-let isPrimitive = object => {
-    if (isEmptyObject(object) || isEmptyArray(object)) {
-        return true;
+        return Object.assign({ name: key }, mappedType);
     }
 
-    if (object instanceof Array) {
-        return isPrimitive(object[0]);
+    _isPrimitive(object) {
+        if (Generator._isEmptyObject(object) || Generator._isEmptyArray(object)) {
+            return true;
+        }
+
+        if (object instanceof Array) {
+            return this._isPrimitive(object[0]);
+        }
+
+        return this.typeMapping.some(mapping => {
+            return mapping.sources.includes(object);
+        });
     }
 
-    return TYPE_MAPPING.some(mapping => {
-        return mapping.sources.includes(object);
-    });
-};
-
-let isPrimitiveObject = object => {
-    if (!object.hasOwnProperty(KEY_TYPE) || !isPrimitive(object.type)) {
-        return false;
-    }
-
-    for (let key in object) {
-        if (
-            object.hasOwnProperty(key) &&
-            key !== KEY_TYPE &&
-            (isPrimitive(object[key]) || typeof object[key] === 'object')
-        ) {
+    _isPrimitiveObject(object) {
+        if (!object.hasOwnProperty(KEY_TYPE) || !this._isPrimitive(object.type)) {
             return false;
         }
-    }
 
-    return true;
-};
-
-let isArrayObject = object => {
-    if (!object.hasOwnProperty(KEY_TYPE) || !(object.type instanceof Array) || !isPrimitive(object.type[0])) {
-        return false;
-    }
-
-    for (let key in object) {
-        if (object.hasOwnProperty(key) && key !== KEY_TYPE && key !== KEY_DEFAULT) {
-            if (isPrimitive(object[key]) || typeof object[key] === 'object') {
+        for (let key in object) {
+            if (
+                object.hasOwnProperty(key) &&
+                key !== KEY_TYPE &&
+                (this._isPrimitive(object[key]) || typeof object[key] === 'object')
+            ) {
                 return false;
             }
         }
+
+        return true;
     }
 
-    return true;
-};
-
-let isIgnoredType = object => {
-    return IGNORED_TYPES.some(type => {
-        return object instanceof type;
-    });
-};
-
-let isUnsupportedType = object => {
-    return UNSUPPORTED_TYPES.some(type => {
-        return object === type;
-    });
-};
-
-let isEmptyObject = object => {
-    return typeof object === 'object' && Object.getOwnPropertyNames(object).length === 0;
-};
-
-let isEmptyArray = object => {
-    return object instanceof Array && object.length === 0;
-};
-
-let getMappedType = type => {
-    return TYPE_MAPPING.find(mapping => {
-        return mapping.sources.includes(type);
-    }).typeDefinition;
-};
-
-let isRequired = primitiveObject => {
-    if (!primitiveObject.hasOwnProperty('required')) {
-        return false;
-    }
-
-    if (typeof primitiveObject.required === 'function') {
-        return primitiveObject.required();
-    }
-
-    return primitiveObject.required === true;
-};
-
-let addNull = typeDefinition => {
-    return { type: ['null', typeDefinition] };
-};
-
-let getDefault = (typeDefinition, object) => {
-    // if a default is defined inside the object and not a function, we use that
-    if (object.hasOwnProperty('default') && !isArrayObject(object) && typeof object.default !== 'function') {
-        return object.default;
-    }
-
-    // if the type allows null we allow null as default
-    if (typeDefinition instanceof Array && typeDefinition.includes('null')) {
-        return null;
-    }
-
-    return undefined;
-};
-
-let init = mongoose => {
-    mongooseInstance = mongoose;
-};
-
-let generate = (models = [], options = {}) => {
-    if (!mongooseInstance) {
-        throw new Error(
-            'Mongoose Avro Schema Generator was not initialized. Please run the init() method and pass a mongoose instance',
-        );
-    }
-
-    let results = [];
-    namespace = options.namespace || namespace;
-
-    if (models.length === 0) {
-        models = mongooseInstance.modelNames();
-    }
-
-    models.forEach(name => {
-        let model;
-        try {
-            model = mongooseInstance.model(name);
-        } catch (err) {
-            throw new Error(`Could not find mongoose schema "${name}": ${err.message}`);
+    _isArrayObject(object) {
+        if (!object.hasOwnProperty(KEY_TYPE) || !(object.type instanceof Array) || !this._isPrimitive(object.type[0])) {
+            return false;
         }
 
-        let schema = model.schema.tree;
-        let document;
-
-        try {
-            document = parse(name, schema);
-        } catch (err) {
-            throw new Error(`An error occured while parsing schema "${name}": ${err.message}`);
+        for (let key in object) {
+            if (object.hasOwnProperty(key) && key !== KEY_TYPE && key !== KEY_DEFAULT) {
+                if (this._isPrimitive(object[key]) || typeof object[key] === 'object') {
+                    return false;
+                }
+            }
         }
 
-        // convert the record to a schema object
-        document.fields = document.type[1].fields;
-        delete document.type;
-        delete document.default;
+        return true;
+    }
 
-        document.dbtype = 'mongodb';
-        document.namespace = namespace;
-        document.dbcollection = model.collection.name;
-        results.push(document);
-    });
+    _isIgnoredType(object) {
+        return this.ignoredTypes.some(type => {
+            return object instanceof type;
+        });
+    }
 
-    return results;
-};
+    _isUnsupportedType(object) {
+        return this.unsupportedTypes.some(type => {
+            return object === type;
+        });
+    }
 
-module.exports = {
-    init: init,
-    generate: generate,
-};
+    _getMappedType(type) {
+        return this.typeMapping.find(mapping => {
+            return mapping.sources.includes(type);
+        }).typeDefinition;
+    }
+
+    static _isEmptyObject(object) {
+        return typeof object === 'object' && Object.getOwnPropertyNames(object).length === 0;
+    }
+
+    static _isEmptyArray(object) {
+        return object instanceof Array && object.length === 0;
+    }
+
+    static _isRequired(primitiveObject) {
+        if (!primitiveObject.hasOwnProperty('required')) {
+            return false;
+        }
+
+        if (typeof primitiveObject.required === 'function') {
+            return primitiveObject.required();
+        }
+
+        return primitiveObject.required === true;
+    }
+
+    static _addNull(typeDefinition) {
+        return { type: ['null', typeDefinition] };
+    }
+
+    _getDefault(typeDefinition, object) {
+        // if a default is defined inside the object and not a function, we use that
+        if (object.hasOwnProperty('default') && !this._isArrayObject(object) && typeof object.default !== 'function') {
+            return object.default;
+        }
+
+        // if the type allows null we allow null as default
+        if (typeDefinition instanceof Array && typeDefinition.includes('null')) {
+            return null;
+        }
+
+        return undefined;
+    }
+}
+
+module.exports = Generator;

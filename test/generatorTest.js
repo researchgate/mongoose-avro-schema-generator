@@ -3,29 +3,14 @@
 const describe = require('mocha').describe;
 const assert = require('assert');
 const mongoose = require('mongoose');
-const mongooseAvroSchemaGenerator = require('../src/generator');
+const Generator = require('../src/generator');
 const cleanupModels = require('./cleanupModels');
 const Schema = mongoose.Schema;
 
-describe('initialization', function() {
-    it('throws exception if generator was not initialized', function() {
-        assert.throws(() => {
-            mongooseAvroSchemaGenerator.generate();
-        }, /Mongoose Avro Schema Generator was not initialized/);
-    });
-
-    it('throws no exception if generator was initialized', function() {
-        mongooseAvroSchemaGenerator.init(mongoose);
-        mongooseAvroSchemaGenerator.generate();
-    });
-});
+let mongooseAvroSchemaGenerator = new Generator(mongoose);
 
 describe('schema meta data', function() {
     const MODEL_NAME = 'test';
-
-    before(function() {
-        mongooseAvroSchemaGenerator.init(mongoose);
-    });
 
     beforeEach(function() {
         let schema = new Schema({});
@@ -77,12 +62,14 @@ describe('schema meta data', function() {
         assertHasAttributes(result, expected);
     });
 
-    it('has namespace provided in options', function() {
+    it('has namespace provided in constructor', function() {
         let namespace = 'some.namespace';
         let expected = {
             namespace: namespace,
         };
-        let result = mongooseAvroSchemaGenerator.generate([], { namespace: namespace });
+        let mongooseAvroSchemaGeneratorWithNamespace = new Generator(mongoose, namespace);
+
+        let result = mongooseAvroSchemaGeneratorWithNamespace.generate([], { namespace: namespace });
 
         assertHasAttributes(result, expected);
     });
@@ -98,10 +85,6 @@ describe('schema meta data', function() {
 });
 
 describe('primitive types', function() {
-    before(function() {
-        mongooseAvroSchemaGenerator.init(mongoose);
-    });
-
     afterEach(function() {
         cleanupModels();
     });
@@ -305,10 +288,6 @@ describe('primitive types', function() {
 });
 
 describe('nullable', function() {
-    before(function() {
-        mongooseAvroSchemaGenerator.init(mongoose);
-    });
-
     afterEach(function() {
         cleanupModels();
     });
@@ -412,10 +391,6 @@ describe('nullable', function() {
 });
 
 describe('defaults', function() {
-    before(function() {
-        mongooseAvroSchemaGenerator.init(mongoose);
-    });
-
     afterEach(function() {
         cleanupModels();
     });
@@ -541,10 +516,6 @@ describe('defaults', function() {
 });
 
 describe('unallowed types', function() {
-    before(function() {
-        mongooseAvroSchemaGenerator.init(mongoose);
-    });
-
     afterEach(function() {
         cleanupModels();
     });
@@ -595,10 +566,6 @@ describe('unallowed types', function() {
 });
 
 describe('recursive types', function() {
-    before(function() {
-        mongooseAvroSchemaGenerator.init(mongoose);
-    });
-
     afterEach(function() {
         cleanupModels();
     });
@@ -1063,10 +1030,6 @@ describe('recursive types', function() {
 });
 
 describe('multiple models', function() {
-    before(function() {
-        mongooseAvroSchemaGenerator.init(mongoose);
-    });
-
     beforeEach(function() {
         let schema1 = new Schema({
             some: Number,
@@ -1108,10 +1071,6 @@ describe('multiple models', function() {
 });
 
 describe('example from readme', function() {
-    before(function() {
-        mongooseAvroSchemaGenerator.init(mongoose);
-    });
-
     afterEach(function() {
         cleanupModels();
     });
@@ -1160,6 +1119,8 @@ describe('example from readme', function() {
             else: [String],
         });
         mongoose.model('mySchema', schema);
+
+        let mongooseAvroSchemaGeneratorWithNamespace = new Generator(mongoose, 'some.namespace');
 
         let expected = [
             {
@@ -1216,7 +1177,7 @@ describe('example from readme', function() {
             },
         ];
 
-        let avro = mongooseAvroSchemaGenerator.generate(['mySchema'], { namespace: 'some.namespace' });
+        let avro = mongooseAvroSchemaGeneratorWithNamespace.generate(['mySchema']);
 
         assert.deepEqual(avro, expected);
     });
