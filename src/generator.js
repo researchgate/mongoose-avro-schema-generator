@@ -157,9 +157,7 @@ class Generator {
 
     _parseArray(key, array) {
         let items = this._parse(key + 'Item', array[0]);
-        if (items.type !== 'record') {
-            items = items.type;
-        }
+        items = items.type;
 
         let type = {
             type: AVRO_TYPE_ARRAY,
