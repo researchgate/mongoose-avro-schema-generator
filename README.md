@@ -267,6 +267,7 @@ Then `mongoosevroSchemaGenerator.generate(['mySchema'], { namespace: 'some.names
     {
         "dbcollection": "myschemas",
         "dbtype": "mongodb",
+        "type": "record",
         "fields": [
             {
                 "name": "something",

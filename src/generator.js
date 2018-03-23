@@ -44,7 +44,7 @@ class Generator {
 
             // convert the record to a schema object
             document.fields = document.type[1].fields;
-            delete document.type;
+            document.type = 'record';
             delete document.default;
 
             document.dbtype = 'mongodb';

@@ -30,11 +30,13 @@ describe('schema meta data', function() {
         assertHasAttributes(result, expected);
     });
 
-    it('does not have a type', function() {
-        let unexpectedFields = ['type'];
+    it('has type record', function() {
+        let expected = {
+            type: 'record',
+        };
         let result = mongooseAvroSchemaGenerator.generate();
 
-        assertNotHasAttributes(result, unexpectedFields);
+        assertHasAttributes(result, expected);
     });
 
     it('does not have a default', function() {
@@ -1126,6 +1128,7 @@ describe('example from readme', function() {
             {
                 dbcollection: 'myschemas',
                 dbtype: 'mongodb',
+                type: 'record',
                 fields: [
                     {
                         name: 'something',
