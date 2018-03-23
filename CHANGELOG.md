@@ -4,8 +4,8 @@ All notable changes to this project will be documented in this file. See [standa
 
 <a name="1.1.6"></a>
 ## [1.1.6](https://github.com/researchgate/mongoose-avro-schema-generator/compare/v1.1.5...v1.1.6) (2018-03-23)
-
-
+### Fixed
+Added missing record type for documents.
 
 <a name="1.1.5"></a>
 ## [1.1.5](https://github.com/researchgate/mongoose-avro-schema-generator/compare/v1.1.4...v1.1.5) (2018-03-23)
