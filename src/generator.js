@@ -255,6 +255,20 @@ class Generator {
         }).typeDefinition;
     }
 
+    _getDefault(typeDefinition, object) {
+        // if a default is defined inside the object and not a function, we use that
+        if (object.hasOwnProperty('default') && !this._isArrayObject(object) && typeof object.default !== 'function') {
+            return object.default;
+        }
+
+        // if the type allows null we allow null as default
+        if (typeDefinition instanceof Array && typeDefinition.includes('null')) {
+            return null;
+        }
+
+        return undefined;
+    }
+
     static _isEmptyObject(object) {
         return typeof object === 'object' && Object.getOwnPropertyNames(object).length === 0;
     }
@@ -277,20 +291,6 @@ class Generator {
 
     static _addNull(typeDefinition) {
         return { type: ['null', typeDefinition] };
-    }
-
-    _getDefault(typeDefinition, object) {
-        // if a default is defined inside the object and not a function, we use that
-        if (object.hasOwnProperty('default') && !this._isArrayObject(object) && typeof object.default !== 'function') {
-            return object.default;
-        }
-
-        // if the type allows null we allow null as default
-        if (typeDefinition instanceof Array && typeDefinition.includes('null')) {
-            return null;
-        }
-
-        return undefined;
     }
 }
 
