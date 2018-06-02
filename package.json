@@ -39,7 +39,7 @@
   "devDependencies": {
     "babel-eslint": "^8.0.2",
     "codecov": "^3.0.0",
-    "conventional-github-releaser": "^2.0.0",
+    "conventional-github-releaser": "^3.0.0",
     "eslint": "^4.5.0",
     "eslint-plugin-prettier": "^2.2.0",
     "husky": "^0.14.3",
