@@ -4,7 +4,7 @@
 
 <p align="center">
   <a href="https://travis-ci.org/researchgate/mongoose-avro-schema-generator"><img alt="Build Status" src="https://travis-ci.org/researchgate/mongoose-avro-schema-generator.svg?branch=master"></a>
-  <a href="https://codecov.io/gh/researchgate/mongoose-avro-schema-generator"><img alt="Codecov" src="https://img.shields.io/codecov/c/github/researchgate/mongoose-avro-schema-generator.svg"></a>
+  <a href="https://codecov.io/gh/researchgate/mongoose-avro-schema-generator"><img src="https://codecov.io/gh/researchgate/mongoose-avro-schema-generator/branch/master/graph/badge.svg" /></a>  
   <a href="https://dependencyci.com/github/researchgate/mongoose-avro-schema-generator"><img alt="Dependency Status" src="https://dependencyci.com/github/researchgate/mongoose-avro-schema-generator/badge"></a>
   <a href="https://greenkeeper.io/"><img alt="Greenkeeper" src="https://badges.greenkeeper.io/researchgate/mongoose-avro-schema-generator.svg"></a>
   <a href="https://www.npmjs.com/package/@researchgate/mongoose-avro-schema-generator"><img alt="NPM version" src="https://img.shields.io/npm/v/@researchgate/mongoose-avro-schema-generator.svg"></a>
