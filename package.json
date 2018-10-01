@@ -41,7 +41,7 @@
     "codecov": "^3.0.4",
     "conventional-github-releaser": "^3.0.0",
     "eslint": "^5.4.0",
-    "eslint-plugin-prettier": "^2.6.2",
+    "eslint-plugin-prettier": "^3.0.0",
     "husky": "^0.14.3",
     "jsonlint-cli": "^1.0.1",
     "lint-staged": "^7.2.2",
