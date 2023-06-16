@@ -82,7 +82,7 @@ class Generator {
                 },
             },
             {
-                sources: [mongoose.Schema.Types.ObjectId],
+                sources: [mongoose.Schema.Types.ObjectId, 'ObjectId'],
                 typeDefinition: {
                     type: AVRO_TYPE_STRING,
                     subtype: 'objectid',
